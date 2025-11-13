@@ -1,0 +1,104 @@
+spring:
+  application:
+    name: subscription-service
+
+  profiles:
+    active: dev
+
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/subscription_service
+    # Identifiants de connexion
+    username: postgres
+    password: akb
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+server:
+  port: 8085
+
+logging:
+  level:
+    root: INFO
+    com.transport.subscription: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+scheduler:
+  renewal:
+    enabled: ${SCHEDULER_RENEWAL_ENABLED:true}
+    cron: ${SCHEDULER_RENEWAL_CRON:0 0 0 * * *}
+
+payment:
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+kafka:
+  topic:
+    subscription-created: subscription-created
+    subscription-renewed: subscription-renewed
+    subscription-cancelled: subscription-cancelled
+    payment-processed: payment-processed
+
+eureka:
+  client:
+    enabled: false
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: false
+    fetch-registry: false
+  instance:
+    hostname: ${HOSTNAME:localhost}
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+

@@ -23,6 +23,7 @@
         <module>api-gateway</module>
         <module>user-service</module>
         <module>schedule-service</module>
+        <module>subscription-service</module>
     </modules>
 
     <properties>
