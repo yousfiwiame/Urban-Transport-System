@@ -1,27 +1,26 @@
-FROM maven:3.9.5-eclipse-temurin-17 AS build
+FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 
-COPY pom.xml .
+# Copy the JAR file
+COPY target/ticket-service-0.0.1-SNAPSHOT.jar /app/ticket-service.jar
 
-RUN mvn dependency:go-offline -B
+# Set permissions
+RUN chmod 755 /app/ticket-service.jar
 
-COPY src ./src
+# Default environment variables
+ENV SPRING_PROFILES_ACTIVE=docker
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
 
-RUN mvn clean package -DskipTests
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-FROM eclipse-temurin:17-jre-alpine
-
-WORKDIR /app
-
-COPY --from=build /app/target/*.jar app.jar
-
+# Expose port
 EXPOSE 8082
 
-ENV SPRING_PROFILES_ACTIVE=prod
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=60s \
+    CMD curl -f http://localhost:8082/api/tickets/health || exit 1
 
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
-
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# Run the application
+CMD ["java", "-jar", "/app/ticket-service.jar"]
