@@ -31,7 +31,7 @@ public class CreateSubscriptionRequest {
     private Integer cardExpMonth;
 
     @NotNull(message = "Card expiration year is required")
-    @Min(value = 2024, message = "Card expiration year must be valid")
+    @Min(value = 2025, message = "Card expiration year must be in the future")
     private Integer cardExpYear;
 
     @NotNull(message = "Payment method is required")

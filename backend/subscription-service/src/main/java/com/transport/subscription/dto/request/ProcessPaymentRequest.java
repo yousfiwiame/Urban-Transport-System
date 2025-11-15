@@ -1,6 +1,7 @@
 package com.transport.subscription.dto.request;
 
 import com.transport.subscription.entity.enums.PaymentMethod;
+import com.transport.subscription.entity.enums.PaymentType;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +27,7 @@ public class ProcessPaymentRequest {
 
     @NotBlank(message = "Currency is required")
     @Size(min = 3, max = 3, message = "Currency must be 3 characters")
+    @Pattern(regexp = "[A-Z]{3}", message = "Currency must be a valid ISO 4217 code (3 uppercase letters)")
     private String currency;
 
     @NotNull(message = "Payment method is required")
@@ -38,5 +40,8 @@ public class ProcessPaymentRequest {
     @NotBlank(message = "Idempotency key is required")
     @Size(max = 128, message = "Idempotency key must not exceed 128 characters")
     private String idempotencyKey;
+
+    @Builder.Default
+    private PaymentType paymentType = PaymentType.INITIAL;
 }
 

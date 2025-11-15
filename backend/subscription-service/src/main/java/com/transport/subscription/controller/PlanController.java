@@ -71,9 +71,16 @@ public class PlanController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete (deactivate) a subscription plan")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "204",
+            description = "Plan successfully deactivated"
+    )
     public ResponseEntity<Void> deletePlan(@PathVariable UUID id) {
+        log.info("Deleting plan: {}", id);
         planService.deletePlan(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
     }
 }
 

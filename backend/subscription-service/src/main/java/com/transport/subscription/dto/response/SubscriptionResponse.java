@@ -20,6 +20,9 @@ public class SubscriptionResponse {
     private UUID subscriptionId;
     private UUID userId;
     private PlanResponse plan;
+    private UUID planId;
+    private String planCode;
+    private String currency;
     private SubscriptionStatus status;
     private LocalDate startDate;
     private LocalDate endDate;

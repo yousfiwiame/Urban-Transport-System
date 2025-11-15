@@ -38,10 +38,12 @@ public class SubscriptionHistory {
     private Subscription subscription;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "old_status", length = 20)
     private SubscriptionStatus oldStatus;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "new_status", nullable = false, length = 20)
     @NotNull
     private SubscriptionStatus newStatus;

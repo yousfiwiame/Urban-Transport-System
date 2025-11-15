@@ -8,7 +8,6 @@ import com.transport.subscription.entity.enums.SubscriptionStatus;
 import com.transport.subscription.repository.SubscriptionRepository;
 import com.transport.subscription.service.PaymentGateway;
 import com.transport.subscription.service.PaymentResult;
-import com.transport.subscription.service.QRCodeService;
 import com.transport.subscription.util.DateUtil;
 import com.transport.subscription.util.PriceCalculator;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,6 @@ public class SubscriptionRenewalScheduler {
 
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentGateway paymentGateway;
-    private final QRCodeService qrCodeService;
 
     @Value("${scheduler.renewal.enabled:true}")
     private boolean renewalEnabled;

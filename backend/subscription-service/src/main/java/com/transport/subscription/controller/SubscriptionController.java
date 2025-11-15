@@ -95,7 +95,7 @@ public class SubscriptionController {
 
     @PostMapping("/validate-qrcode")
     @Operation(summary = "Validate QR code")
-    public ResponseEntity<Boolean> validateQRCode(@RequestBody String qrCodeData) {
+    public ResponseEntity<Boolean> validateQRCode(@RequestParam String qrCodeData) {
         boolean isValid = subscriptionService.validateQRCode(qrCodeData);
         return ResponseEntity.ok(isValid);
     }
@@ -106,6 +106,17 @@ public class SubscriptionController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateSubscriptionRequest request) {
         SubscriptionResponse response = subscriptionService.updateSubscription(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/retry-payment")
+    @Operation(summary = "Retry payment for a pending subscription")
+    public ResponseEntity<SubscriptionResponse> retryPayment(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.transport.subscription.dto.request.ProcessPaymentRequest paymentRequest) {
+        log.info("Retrying payment for subscription: {}", id);
+        paymentRequest.setSubscriptionId(id);
+        SubscriptionResponse response = subscriptionService.retryPayment(id, paymentRequest);
         return ResponseEntity.ok(response);
     }
 }

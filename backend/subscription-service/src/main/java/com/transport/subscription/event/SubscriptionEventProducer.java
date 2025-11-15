@@ -1,8 +1,9 @@
 package com.transport.subscription.event;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -10,10 +11,11 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
+@ConditionalOnProperty(name = "spring.kafka.bootstrap-servers")
 public class SubscriptionEventProducer {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    @Autowired(required = false)
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @Value("${kafka.topic.subscription-created:subscription-created}")
     private String subscriptionCreatedTopic;
@@ -28,6 +30,10 @@ public class SubscriptionEventProducer {
     private String paymentProcessedTopic;
 
     public void publishSubscriptionCreatedEvent(UUID subscriptionId, UUID userId, UUID planId) {
+        if (kafkaTemplate == null) {
+            log.debug("Kafka not configured, skipping event publication");
+            return;
+        }
         try {
             SubscriptionCreatedEvent event = SubscriptionCreatedEvent.builder()
                     .subscriptionId(subscriptionId)
@@ -43,6 +49,10 @@ public class SubscriptionEventProducer {
     }
 
     public void publishSubscriptionRenewedEvent(UUID subscriptionId, UUID userId) {
+        if (kafkaTemplate == null) {
+            log.debug("Kafka not configured, skipping event publication");
+            return;
+        }
         try {
             SubscriptionRenewedEvent event = SubscriptionRenewedEvent.builder()
                     .subscriptionId(subscriptionId)
@@ -57,6 +67,10 @@ public class SubscriptionEventProducer {
     }
 
     public void publishSubscriptionCancelledEvent(UUID subscriptionId, UUID userId, String reason) {
+        if (kafkaTemplate == null) {
+            log.debug("Kafka not configured, skipping event publication");
+            return;
+        }
         try {
             SubscriptionCancelledEvent event = SubscriptionCancelledEvent.builder()
                     .subscriptionId(subscriptionId)
@@ -72,6 +86,10 @@ public class SubscriptionEventProducer {
     }
 
     public void publishPaymentProcessedEvent(UUID paymentId, UUID subscriptionId, String status) {
+        if (kafkaTemplate == null) {
+            log.debug("Kafka not configured, skipping event publication");
+            return;
+        }
         try {
             PaymentProcessedEvent event = PaymentProcessedEvent.builder()
                     .paymentId(paymentId)

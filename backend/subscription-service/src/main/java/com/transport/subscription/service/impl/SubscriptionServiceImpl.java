@@ -3,15 +3,14 @@ package com.transport.subscription.service.impl;
 import com.transport.subscription.dto.mapper.SubscriptionMapper;
 import com.transport.subscription.dto.request.CancelSubscriptionRequest;
 import com.transport.subscription.dto.request.CreateSubscriptionRequest;
+import com.transport.subscription.dto.request.ProcessPaymentRequest;
 import com.transport.subscription.dto.request.RenewSubscriptionRequest;
 import com.transport.subscription.dto.request.UpdateSubscriptionRequest;
+import com.transport.subscription.dto.response.PaymentResponse;
 import com.transport.subscription.dto.response.QRCodeResponse;
 import com.transport.subscription.dto.response.SubscriptionResponse;
 import com.transport.subscription.entity.Subscription;
 import com.transport.subscription.entity.SubscriptionHistory;
-import com.transport.subscription.entity.SubscriptionPayment;
-import com.transport.subscription.entity.enums.PaymentStatus;
-import com.transport.subscription.entity.enums.PaymentType;
 import com.transport.subscription.entity.enums.SubscriptionStatus;
 import com.transport.subscription.exception.DuplicateSubscriptionException;
 import com.transport.subscription.exception.InvalidSubscriptionException;
@@ -30,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -92,6 +90,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription = subscriptionRepository.save(subscription);
 
         // 5. Process initial payment
+        // ✅ La subscription est déjà sauvegardée en PENDING
+        // Si le paiement échoue, elle reste PENDING pour permettre un retry
         try {
             var paymentRequest = com.transport.subscription.dto.request.ProcessPaymentRequest.builder()
                     .subscriptionId(subscription.getSubscriptionId())
@@ -107,12 +107,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             if (paymentResponse.getPaymentStatus() == com.transport.subscription.entity.enums.PaymentStatus.SUCCEEDED) {
                 subscription.setStatus(SubscriptionStatus.ACTIVE);
                 subscription.setAmountPaid(plan.getPrice());
+                log.info("✅ Payment succeeded, subscription activated: {}", subscription.getSubscriptionId());
             } else {
-                subscription.setStatus(SubscriptionStatus.CANCELLED);
+                // ❌ Paiement échoué : reste PENDING pour permettre un retry
+                log.warn("⚠️ Payment failed, subscription remains PENDING: {}. Reason: {}", 
+                        subscription.getSubscriptionId(), 
+                        paymentResponse.getFailureReason());
+                // La subscription reste PENDING - l'utilisateur pourra réessayer
             }
         } catch (Exception e) {
-            log.error("Payment processing failed: {}", e.getMessage());
-            subscription.setStatus(SubscriptionStatus.CANCELLED);
+            // ❌ Exception lors du paiement : reste PENDING pour permettre un retry
+            log.error("❌ Payment processing failed, subscription remains PENDING: {}. Error: {}", 
+                    subscription.getSubscriptionId(), e.getMessage());
+            // La subscription reste PENDING - l'utilisateur pourra réessayer
         }
 
         // 6. Generate QR code
@@ -209,13 +216,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                     .paymentMethod(com.transport.subscription.entity.enums.PaymentMethod.CARD)
                     .cardToken(subscription.getCardToken())
                     .idempotencyKey(UUID.randomUUID().toString())
+                    .paymentType(com.transport.subscription.entity.enums.PaymentType.RENEWAL)
                     .build();
 
             var paymentResponse = paymentService.processPayment(paymentRequest);
 
             if (paymentResponse.getPaymentStatus() == com.transport.subscription.entity.enums.PaymentStatus.SUCCEEDED) {
-                // Extend subscription
-                LocalDate newEndDate = DateUtil.calculateEndDate(LocalDate.now(), plan.getDurationDays());
+                // Extend subscription - preserve days by starting from endDate + 1
+                LocalDate newStartDate = subscription.getEndDate() != null 
+                    ? subscription.getEndDate().plusDays(1) 
+                    : LocalDate.now();
+                LocalDate newEndDate = DateUtil.calculateEndDate(newStartDate, plan.getDurationDays());
                 subscription.setEndDate(newEndDate);
                 subscription.setNextBillingDate(newEndDate);
                 subscription.setAmountPaid(PriceCalculator.add(subscription.getAmountPaid(), plan.getPrice()));
@@ -311,6 +322,56 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         subscriptionMapper.updateEntityFromRequest(request, subscription);
         subscription = subscriptionRepository.save(subscription);
+
+        return subscriptionMapper.toResponse(subscription);
+    }
+
+    @Override
+    public SubscriptionResponse retryPayment(UUID subscriptionId, ProcessPaymentRequest paymentRequest) {
+        log.info("Retrying payment for subscription: {}", subscriptionId);
+
+        Subscription subscription = subscriptionRepository
+                .findBySubscriptionIdAndDeletedAtIsNull(subscriptionId)
+                .orElseThrow(() -> new SubscriptionNotFoundException("Subscription not found: " + subscriptionId));
+
+        // Vérifier que le status est PENDING
+        if (subscription.getStatus() != SubscriptionStatus.PENDING) {
+            throw new InvalidSubscriptionException(
+                    "Can only retry payment for PENDING subscriptions. Current status: " + subscription.getStatus());
+        }
+
+        // S'assurer que le subscriptionId dans la requête correspond
+        paymentRequest.setSubscriptionId(subscriptionId);
+
+        // Tenter le paiement
+        try {
+            PaymentResponse paymentResponse = paymentService.processPayment(paymentRequest);
+
+            if (paymentResponse.getPaymentStatus() == com.transport.subscription.entity.enums.PaymentStatus.SUCCEEDED) {
+                // Activer l'abonnement
+                SubscriptionStatus oldStatus = subscription.getStatus();
+                subscription.setStatus(SubscriptionStatus.ACTIVE);
+                subscription.setAmountPaid(paymentRequest.getAmount());
+                subscription = subscriptionRepository.save(subscription);
+
+                // Créer un historique
+                createHistoryRecord(subscription, oldStatus, SubscriptionStatus.ACTIVE,
+                        "PAYMENT_RETRY_SUCCEEDED", null);
+
+                log.info("✅ Subscription activated after payment retry: {}", subscriptionId);
+            } else {
+                log.warn("⚠️ Payment retry failed, subscription remains PENDING: {}. Reason: {}",
+                        subscriptionId, paymentResponse.getFailureReason());
+                throw new InvalidSubscriptionException(
+                        "Payment retry failed: " + paymentResponse.getFailureReason());
+            }
+
+        } catch (InvalidSubscriptionException e) {
+            throw e; // Re-lancer les exceptions métier
+        } catch (Exception e) {
+            log.error("❌ Payment retry failed with exception: {}", e.getMessage(), e);
+            throw new InvalidSubscriptionException("Payment retry failed: " + e.getMessage());
+        }
 
         return subscriptionMapper.toResponse(subscription);
     }

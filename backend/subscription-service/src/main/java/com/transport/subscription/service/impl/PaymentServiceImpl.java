@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -68,7 +67,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
                 .paymentMethod(request.getPaymentMethod())
-                .paymentType(PaymentType.INITIAL)
+                .paymentType(request.getPaymentType() != null ? request.getPaymentType() : PaymentType.INITIAL)
                 .paymentStatus(result.isSuccess() ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED)
                 .externalTxnId(result.getExternalTxnId())
                 .idempotencyKey(request.getIdempotencyKey())

@@ -1,9 +1,5 @@
 package com.transport.subscription.service.impl;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import com.transport.subscription.exception.QRCodeGenerationException;
 import com.transport.subscription.service.QRCodeService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +12,6 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class QRCodeServiceImpl implements QRCodeService {
-
-    private static final int QR_CODE_SIZE = 300;
     private static final String QR_CODE_PREFIX = "SUB_";
 
     @Override

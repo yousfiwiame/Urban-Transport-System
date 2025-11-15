@@ -27,6 +27,9 @@ public interface SubscriptionMapper {
     Subscription toEntity(CreateSubscriptionRequest request);
 
     @Mapping(target = "hasQrCode", expression = "java(subscription.getQrCodeData() != null && !subscription.getQrCodeData().isEmpty())")
+    @Mapping(source = "plan.planId", target = "planId")
+    @Mapping(source = "plan.planCode", target = "planCode")
+    @Mapping(source = "plan.currency", target = "currency")
     SubscriptionResponse toResponse(Subscription subscription);
 
     List<SubscriptionResponse> toResponseList(List<Subscription> subscriptions);

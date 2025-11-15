@@ -2,6 +2,7 @@ package com.transport.subscription.service;
 
 import com.transport.subscription.dto.request.CancelSubscriptionRequest;
 import com.transport.subscription.dto.request.CreateSubscriptionRequest;
+import com.transport.subscription.dto.request.ProcessPaymentRequest;
 import com.transport.subscription.dto.request.RenewSubscriptionRequest;
 import com.transport.subscription.dto.request.UpdateSubscriptionRequest;
 import com.transport.subscription.dto.response.QRCodeResponse;
@@ -21,5 +22,6 @@ public interface SubscriptionService {
     QRCodeResponse generateQRCode(UUID subscriptionId);
     boolean validateQRCode(String qrCodeData);
     SubscriptionResponse updateSubscription(UUID subscriptionId, UpdateSubscriptionRequest request);
+    SubscriptionResponse retryPayment(UUID subscriptionId, ProcessPaymentRequest paymentRequest);
 }
 

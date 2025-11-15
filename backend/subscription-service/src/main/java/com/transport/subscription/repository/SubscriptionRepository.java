@@ -28,6 +28,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
             @Param("nextBillingDate") LocalDate nextBillingDate
     );
 
+    /**
+     * Vérifie si un utilisateur a déjà un abonnement actif pour un plan donné
+     */
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END " +
            "FROM Subscription s WHERE s.userId = :userId " +
            "AND s.plan.planId = :planId " +
@@ -50,5 +53,31 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     );
 
     Optional<Subscription> findBySubscriptionIdAndDeletedAtIsNull(UUID subscriptionId);
+
+    @Query("SELECT s FROM Subscription s WHERE s.status = :status " +
+           "AND s.autoRenewEnabled = :autoRenewEnabled " +
+           "AND s.deletedAt IS NULL")
+    List<Subscription> findByStatusAndAutoRenewEnabled(
+            @Param("status") SubscriptionStatus status,
+            @Param("autoRenewEnabled") Boolean autoRenewEnabled
+    );
+
+    @Query("SELECT s FROM Subscription s WHERE s.status = :status " +
+           "AND s.endDate < :today " +
+           "AND s.deletedAt IS NULL")
+    List<Subscription> findExpiredSubscriptions(
+            @Param("status") SubscriptionStatus status,
+            @Param("today") LocalDate today
+    );
+
+    @Query("SELECT s FROM Subscription s WHERE s.status = :status " +
+           "AND s.nextBillingDate <= :date " +
+           "AND s.deletedAt IS NULL")
+    List<Subscription> findByStatusAndNextBillingDateLessThanEqual(
+            @Param("status") SubscriptionStatus status,
+            @Param("date") LocalDate date
+    );
+
+    List<Subscription> findByUserIdOrderByCreatedAtDesc(UUID userId);
 }
 

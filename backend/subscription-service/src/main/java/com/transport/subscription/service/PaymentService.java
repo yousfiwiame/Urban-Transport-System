@@ -2,7 +2,6 @@ package com.transport.subscription.service;
 
 import com.transport.subscription.dto.request.ProcessPaymentRequest;
 import com.transport.subscription.dto.response.PaymentResponse;
-import com.transport.subscription.entity.enums.PaymentType;
 
 import java.util.List;
 import java.util.UUID;

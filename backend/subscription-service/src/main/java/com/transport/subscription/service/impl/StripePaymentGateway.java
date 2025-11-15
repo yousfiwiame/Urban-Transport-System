@@ -11,6 +11,7 @@ import com.transport.subscription.service.PaymentGateway;
 import com.transport.subscription.service.PaymentResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -19,10 +20,14 @@ import java.math.RoundingMode;
 
 @Slf4j
 @Service
+@Profile("!dev") // Actif partout SAUF en dev (test, prod, etc.)
 public class StripePaymentGateway implements PaymentGateway {
 
     @Value("${payment.stripe.secret-key:}")
     private String stripeSecretKey;
+
+    @Value("${payment.stripe.webhook-secret:}")
+    private String webhookSecret;
 
     @PostConstruct
     public void init() {
@@ -38,9 +43,8 @@ public class StripePaymentGateway implements PaymentGateway {
     public PaymentResult processPayment(String cardToken, BigDecimal amount, String currency, String idempotencyKey) {
         try {
             if (stripeSecretKey == null || stripeSecretKey.isEmpty()) {
-                // Mock payment for development
-                log.warn("Using mock payment (Stripe not configured)");
-                return new PaymentResult(true, "mock_txn_" + System.currentTimeMillis(), null);
+                log.error("Stripe secret key not configured! Payment will fail.");
+                return new PaymentResult(false, null, "Stripe secret key not configured");
             }
 
             ChargeCreateParams params = ChargeCreateParams.builder()
@@ -80,8 +84,8 @@ public class StripePaymentGateway implements PaymentGateway {
     public PaymentResult refundPayment(String externalTxnId, BigDecimal amount) {
         try {
             if (stripeSecretKey == null || stripeSecretKey.isEmpty()) {
-                log.warn("Using mock refund (Stripe not configured)");
-                return new PaymentResult(true, "mock_refund_" + System.currentTimeMillis(), null);
+                log.error("Stripe secret key not configured! Refund will fail.");
+                return new PaymentResult(false, null, "Stripe secret key not configured");
             }
 
             RefundCreateParams params = RefundCreateParams.builder()
@@ -107,9 +111,27 @@ public class StripePaymentGateway implements PaymentGateway {
 
     @Override
     public boolean verifyWebhookSignature(String payload, String signature) {
-        // Implement webhook signature verification
-        // This is a simplified version - in production, use Stripe's webhook signature verification
-        return signature != null && !signature.isEmpty();
+        if (webhookSecret == null || webhookSecret.isEmpty()) {
+            log.warn("Webhook secret not configured. Skipping signature verification.");
+            return true; // Allow in development if not configured
+        }
+        
+        if (signature == null || signature.isEmpty()) {
+            log.error("Webhook signature is missing");
+            return false;
+        }
+
+        try {
+            // Use Stripe's webhook signature verification
+            com.stripe.net.Webhook.constructEvent(payload, signature, webhookSecret);
+            return true;
+        } catch (com.stripe.exception.SignatureVerificationException e) {
+            log.error("Webhook signature verification failed: {}", e.getMessage());
+            return false;
+        } catch (Exception e) {
+            log.error("Error verifying webhook signature: {}", e.getMessage());
+            return false;
+        }
     }
 
     private Long convertToStripeAmount(BigDecimal amount) {
