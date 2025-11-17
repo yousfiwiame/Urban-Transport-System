@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -39,7 +38,7 @@ public class SubscriptionController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get subscription by ID")
-    public ResponseEntity<SubscriptionResponse> getSubscription(@PathVariable UUID id) {
+    public ResponseEntity<SubscriptionResponse> getSubscription(@PathVariable Integer id) {
         SubscriptionResponse response = subscriptionService.getSubscriptionById(id);
         return ResponseEntity.ok(response);
     }
@@ -47,15 +46,23 @@ public class SubscriptionController {
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get all subscriptions for a user")
     public ResponseEntity<List<SubscriptionResponse>> getSubscriptionsByUser(
-            @PathVariable UUID userId) {
+            @PathVariable Integer userId) {
         List<SubscriptionResponse> responses = subscriptionService.getSubscriptionsByUserId(userId);
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/user/{userId}/active")
+    @Operation(summary = "Get active subscriptions for a user")
+    public ResponseEntity<List<SubscriptionResponse>> getActiveSubscriptionsByUser(
+            @PathVariable Integer userId) {
+        List<SubscriptionResponse> responses = subscriptionService.getActiveSubscriptionsByUserId(userId);
         return ResponseEntity.ok(responses);
     }
 
     @PutMapping("/{id}/cancel")
     @Operation(summary = "Cancel a subscription")
     public ResponseEntity<SubscriptionResponse> cancelSubscription(
-            @PathVariable UUID id,
+            @PathVariable Integer id,
             @Valid @RequestBody CancelSubscriptionRequest request) {
         request.setSubscriptionId(id);
         SubscriptionResponse response = subscriptionService.cancelSubscription(request);
@@ -65,7 +72,7 @@ public class SubscriptionController {
     @PutMapping("/{id}/renew")
     @Operation(summary = "Renew a subscription")
     public ResponseEntity<SubscriptionResponse> renewSubscription(
-            @PathVariable UUID id,
+            @PathVariable Integer id,
             @Valid @RequestBody RenewSubscriptionRequest request) {
         request.setSubscriptionId(id);
         SubscriptionResponse response = subscriptionService.renewSubscription(request);
@@ -74,21 +81,21 @@ public class SubscriptionController {
 
     @PutMapping("/{id}/pause")
     @Operation(summary = "Pause a subscription")
-    public ResponseEntity<SubscriptionResponse> pauseSubscription(@PathVariable UUID id) {
+    public ResponseEntity<SubscriptionResponse> pauseSubscription(@PathVariable Integer id) {
         SubscriptionResponse response = subscriptionService.pauseSubscription(id);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}/resume")
     @Operation(summary = "Resume a paused subscription")
-    public ResponseEntity<SubscriptionResponse> resumeSubscription(@PathVariable UUID id) {
+    public ResponseEntity<SubscriptionResponse> resumeSubscription(@PathVariable Integer id) {
         SubscriptionResponse response = subscriptionService.resumeSubscription(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}/qrcode")
     @Operation(summary = "Get QR code for a subscription")
-    public ResponseEntity<QRCodeResponse> getQRCode(@PathVariable UUID id) {
+    public ResponseEntity<QRCodeResponse> getQRCode(@PathVariable Integer id) {
         QRCodeResponse response = subscriptionService.generateQRCode(id);
         return ResponseEntity.ok(response);
     }
@@ -103,7 +110,7 @@ public class SubscriptionController {
     @PutMapping("/{id}")
     @Operation(summary = "Update subscription")
     public ResponseEntity<SubscriptionResponse> updateSubscription(
-            @PathVariable UUID id,
+            @PathVariable Integer id,
             @Valid @RequestBody UpdateSubscriptionRequest request) {
         SubscriptionResponse response = subscriptionService.updateSubscription(id, request);
         return ResponseEntity.ok(response);
@@ -112,7 +119,7 @@ public class SubscriptionController {
     @PostMapping("/{id}/retry-payment")
     @Operation(summary = "Retry payment for a pending subscription")
     public ResponseEntity<SubscriptionResponse> retryPayment(
-            @PathVariable UUID id,
+            @PathVariable Integer id,
             @Valid @RequestBody com.transport.subscription.dto.request.ProcessPaymentRequest paymentRequest) {
         log.info("Retrying payment for subscription: {}", id);
         paymentRequest.setSubscriptionId(id);

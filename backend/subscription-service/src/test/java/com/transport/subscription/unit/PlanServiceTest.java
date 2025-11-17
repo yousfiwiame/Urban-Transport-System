@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,7 +43,7 @@ class PlanServiceTest {
 
     @BeforeEach
     void setUp() {
-        UUID planId = UUID.randomUUID();
+        Integer planId = 1;
         
         testPlan = SubscriptionPlan.builder()
                 .planId(planId)
@@ -110,7 +109,7 @@ class PlanServiceTest {
     @DisplayName("Should get plan by ID successfully")
     void testGetPlanById_Success() {
         // Given
-        UUID planId = testPlan.getPlanId();
+        Integer planId = testPlan.getPlanId();
         when(planRepository.findById(planId)).thenReturn(Optional.of(testPlan));
         when(planMapper.toResponse(testPlan)).thenReturn(planResponse);
 
@@ -127,7 +126,7 @@ class PlanServiceTest {
     @DisplayName("Should throw exception when plan not found")
     void testGetPlanById_NotFound() {
         // Given
-        UUID planId = UUID.randomUUID();
+        Integer planId = 999;
         when(planRepository.findById(planId)).thenReturn(Optional.empty());
 
         // When & Then
@@ -156,7 +155,7 @@ class PlanServiceTest {
     @DisplayName("Should deactivate plan successfully")
     void testDeletePlan_Success() {
         // Given
-        UUID planId = testPlan.getPlanId();
+        Integer planId = testPlan.getPlanId();
         when(planRepository.findById(planId)).thenReturn(Optional.of(testPlan));
         when(planRepository.save(any(SubscriptionPlan.class))).thenReturn(testPlan);
 

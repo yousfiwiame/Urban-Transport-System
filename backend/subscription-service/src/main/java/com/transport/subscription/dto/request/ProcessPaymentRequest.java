@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -18,7 +17,7 @@ import java.util.UUID;
 public class ProcessPaymentRequest {
 
     @NotNull(message = "Subscription ID is required")
-    private UUID subscriptionId;
+    private Integer subscriptionId;
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")

@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,10 +14,10 @@ import java.util.UUID;
 public class CreateSubscriptionRequest {
 
     @NotNull(message = "User ID is required")
-    private UUID userId;
+    private Integer userId;
 
     @NotNull(message = "Plan ID is required")
-    private UUID planId;
+    private Integer planId;
 
     @NotBlank(message = "Card token is required")
     @Size(max = 128, message = "Card token must not exceed 128 characters")

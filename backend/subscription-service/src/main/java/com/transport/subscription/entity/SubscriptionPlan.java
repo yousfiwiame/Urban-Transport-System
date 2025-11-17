@@ -5,12 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "subscription_plan", indexes = {
@@ -24,10 +21,9 @@ import java.util.UUID;
 public class SubscriptionPlan {
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "plan_id", updatable = false, nullable = false)
-    private UUID planId;
+    private Integer planId;
 
     @Column(name = "plan_code", nullable = false, unique = true, length = 64)
     private String planCode;

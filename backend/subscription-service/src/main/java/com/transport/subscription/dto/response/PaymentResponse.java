@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -18,8 +17,8 @@ import java.util.UUID;
 @Builder
 public class PaymentResponse {
 
-    private UUID paymentId;
-    private UUID subscriptionId;
+    private Integer paymentId;
+    private Integer subscriptionId;
     private BigDecimal amount;
     private String currency;
     private PaymentStatus paymentStatus;

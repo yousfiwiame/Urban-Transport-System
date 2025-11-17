@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -15,7 +14,7 @@ public class QRCodeServiceImpl implements QRCodeService {
     private static final String QR_CODE_PREFIX = "SUB_";
 
     @Override
-    public String generateQRCode(UUID subscriptionId) {
+    public String generateQRCode(Integer subscriptionId) {
         try {
             String qrData = QR_CODE_PREFIX + subscriptionId.toString() + "_" + System.currentTimeMillis();
             
@@ -50,7 +49,7 @@ public class QRCodeServiceImpl implements QRCodeService {
     }
 
     @Override
-    public String getQRCodeData(UUID subscriptionId) {
+    public String getQRCodeData(Integer subscriptionId) {
         return generateQRCode(subscriptionId);
     }
 }

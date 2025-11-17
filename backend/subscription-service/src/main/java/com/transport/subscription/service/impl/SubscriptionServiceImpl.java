@@ -22,6 +22,7 @@ import com.transport.subscription.repository.SubscriptionRepository;
 import com.transport.subscription.service.PaymentService;
 import com.transport.subscription.service.QRCodeService;
 import com.transport.subscription.service.SubscriptionService;
+import com.transport.subscription.util.CardValidationUtil;
 import com.transport.subscription.util.DateUtil;
 import com.transport.subscription.util.PriceCalculator;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.UUID; // Keep for UUID.randomUUID() for idempotency keys
 
 @Slf4j
 @Service
@@ -60,7 +61,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             throw new PlanNotFoundException("Plan is not active: " + request.getPlanId());
         }
 
-        // 2. Check for existing active subscription
+        // 2. Validate card expiration date
+        if (CardValidationUtil.isCardExpired(request.getCardExpMonth(), request.getCardExpYear())) {
+            throw new InvalidSubscriptionException(
+                    "Card is expired. Please use a valid payment method.");
+        }
+
+        if (!CardValidationUtil.isValidExpirationDate(request.getCardExpMonth(), request.getCardExpYear())) {
+            throw new InvalidSubscriptionException("Invalid card expiration date");
+        }
+
+        // 3. Check for existing active subscription
         if (subscriptionRepository.existsByUserIdAndPlanIdAndStatusAndDeletedAtIsNull(
                 request.getUserId(),
                 request.getPlanId(),
@@ -69,12 +80,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                     "User already has an active subscription for this plan");
         }
 
-        // 3. Calculate dates
+        // 4. Calculate dates
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = DateUtil.calculateEndDate(startDate, plan.getDurationDays());
         LocalDate nextBillingDate = DateUtil.calculateNextBillingDate(startDate, plan.getDurationDays());
 
-        // 4. Create subscription entity
+        // 5. Create subscription entity
         Subscription subscription = subscriptionMapper.toEntity(request);
         subscription.setUserId(request.getUserId());
         subscription.setPlan(plan);
@@ -89,7 +100,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         subscription = subscriptionRepository.save(subscription);
 
-        // 5. Process initial payment
+        // 6. Process initial payment
         // ✅ La subscription est déjà sauvegardée en PENDING
         // Si le paiement échoue, elle reste PENDING pour permettre un retry
         try {
@@ -141,19 +152,45 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public SubscriptionResponse getSubscriptionById(UUID subscriptionId) {
+    @Transactional
+    public SubscriptionResponse getSubscriptionById(Integer subscriptionId) {
         Subscription subscription = subscriptionRepository
                 .findBySubscriptionIdAndDeletedAtIsNull(subscriptionId)
                 .orElseThrow(() -> new SubscriptionNotFoundException("Subscription not found: " + subscriptionId));
+        
+        // Valider et corriger le statut si nécessaire (expiration)
+        validateAndFixSubscriptionStatus(subscription);
+        
         return subscriptionMapper.toResponse(subscription);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<SubscriptionResponse> getSubscriptionsByUserId(UUID userId) {
+    @Transactional
+    public List<SubscriptionResponse> getSubscriptionsByUserId(Integer userId) {
         List<Subscription> subscriptions = subscriptionRepository.findByUserId(userId);
+        
+        // Valider et corriger le statut de chaque abonnement si nécessaire
+        subscriptions.forEach(this::validateAndFixSubscriptionStatus);
+        
         return subscriptionMapper.toResponseList(subscriptions);
+    }
+
+    @Override
+    @Transactional
+    public List<SubscriptionResponse> getActiveSubscriptionsByUserId(Integer userId) {
+        List<Subscription> subscriptions = subscriptionRepository.findActiveSubscriptionsByUserId(
+                userId, SubscriptionStatus.ACTIVE);
+        
+        // Filtrer et valider : ne retourner que les abonnements vraiment actifs (non expirés)
+        List<Subscription> validActiveSubscriptions = subscriptions.stream()
+                .filter(sub -> {
+                    validateAndFixSubscriptionStatus(sub);
+                    // Ne retourner que ceux qui sont toujours ACTIVE après validation
+                    return sub.getStatus() == SubscriptionStatus.ACTIVE;
+                })
+                .toList();
+        
+        return subscriptionMapper.toResponseList(validActiveSubscriptions);
     }
 
     @Override
@@ -195,15 +232,43 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .orElseThrow(() -> new SubscriptionNotFoundException(
                         "Subscription not found: " + request.getSubscriptionId()));
 
-        if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
-            throw new InvalidSubscriptionException("Only active subscriptions can be renewed");
+        // Valider et corriger le statut si nécessaire (expiration)
+        validateAndFixSubscriptionStatus(subscription);
+
+        // Permettre le renouvellement d'abonnements ACTIVE ou EXPIRED récemment (dans les 7 jours)
+        boolean canRenew = subscription.getStatus() == SubscriptionStatus.ACTIVE;
+        if (!canRenew && subscription.getStatus() == SubscriptionStatus.EXPIRED) {
+            LocalDate expirationDate = subscription.getEndDate();
+            if (expirationDate != null) {
+                long daysSinceExpiration = DateUtil.daysBetween(expirationDate, LocalDate.now());
+                canRenew = daysSinceExpiration <= 7; // Permettre renouvellement dans les 7 jours après expiration
+            }
+        }
+
+        if (!canRenew) {
+            throw new InvalidSubscriptionException(
+                    "Only active subscriptions or recently expired subscriptions (within 7 days) can be renewed");
         }
 
         // Update payment method if provided
         if (!request.getUseStoredPaymentMethod() && request.getNewCardToken() != null) {
+            // Valider la nouvelle carte
+            if (CardValidationUtil.isCardExpired(request.getNewCardExpMonth(), request.getNewCardExpYear())) {
+                throw new InvalidSubscriptionException(
+                        "New card is expired. Please use a valid payment method.");
+            }
+            if (!CardValidationUtil.isValidExpirationDate(request.getNewCardExpMonth(), request.getNewCardExpYear())) {
+                throw new InvalidSubscriptionException("Invalid new card expiration date");
+            }
             subscription.setCardToken(request.getNewCardToken());
             subscription.setCardExpMonth(request.getNewCardExpMonth());
             subscription.setCardExpYear(request.getNewCardExpYear());
+        } else {
+            // Valider la carte stockée si on l'utilise
+            if (CardValidationUtil.isCardExpired(subscription.getCardExpMonth(), subscription.getCardExpYear())) {
+                throw new InvalidSubscriptionException(
+                        "Stored card is expired. Please provide a new payment method.");
+            }
         }
 
         // Process renewal payment
@@ -248,7 +313,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public SubscriptionResponse pauseSubscription(UUID subscriptionId) {
+    public SubscriptionResponse pauseSubscription(Integer subscriptionId) {
         log.info("Pausing subscription: {}", subscriptionId);
 
         Subscription subscription = subscriptionRepository
@@ -270,7 +335,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public SubscriptionResponse resumeSubscription(UUID subscriptionId) {
+    public SubscriptionResponse resumeSubscription(Integer subscriptionId) {
         log.info("Resuming subscription: {}", subscriptionId);
 
         Subscription subscription = subscriptionRepository
@@ -279,6 +344,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         if (subscription.getStatus() != SubscriptionStatus.PAUSED) {
             throw new InvalidSubscriptionException("Only paused subscriptions can be resumed");
+        }
+
+        // Valider que l'abonnement n'est pas expiré avant de reprendre
+        validateAndFixSubscriptionStatus(subscription);
+        
+        if (subscription.getStatus() == SubscriptionStatus.EXPIRED) {
+            throw new InvalidSubscriptionException(
+                    "Cannot resume expired subscription. Please renew it first.");
         }
 
         SubscriptionStatus oldStatus = subscription.getStatus();
@@ -292,7 +365,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public QRCodeResponse generateQRCode(UUID subscriptionId) {
+    public QRCodeResponse generateQRCode(Integer subscriptionId) {
         Subscription subscription = subscriptionRepository
                 .findBySubscriptionIdAndDeletedAtIsNull(subscriptionId)
                 .orElseThrow(() -> new SubscriptionNotFoundException("Subscription not found: " + subscriptionId));
@@ -313,7 +386,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public SubscriptionResponse updateSubscription(UUID subscriptionId, UpdateSubscriptionRequest request) {
+    public SubscriptionResponse updateSubscription(Integer subscriptionId, UpdateSubscriptionRequest request) {
         log.info("Updating subscription: {}", subscriptionId);
 
         Subscription subscription = subscriptionRepository
@@ -327,7 +400,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public SubscriptionResponse retryPayment(UUID subscriptionId, ProcessPaymentRequest paymentRequest) {
+    public SubscriptionResponse retryPayment(Integer subscriptionId, ProcessPaymentRequest paymentRequest) {
         log.info("Retrying payment for subscription: {}", subscriptionId);
 
         Subscription subscription = subscriptionRepository
@@ -374,6 +447,48 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
 
         return subscriptionMapper.toResponse(subscription);
+    }
+
+    /**
+     * Valide et corrige le statut d'un abonnement si nécessaire.
+     * Si l'abonnement est ACTIVE ou PAUSED mais que sa date de fin est passée,
+     * il est automatiquement marqué comme EXPIRED.
+     * 
+     * Cette méthode garantit la cohérence des données et évite de retourner
+     * des abonnements expirés comme ACTIVE.
+     */
+    private void validateAndFixSubscriptionStatus(Subscription subscription) {
+        if (subscription == null || subscription.getDeletedAt() != null) {
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+        SubscriptionStatus currentStatus = subscription.getStatus();
+
+        // Vérifier si l'abonnement devrait être expiré
+        if ((currentStatus == SubscriptionStatus.ACTIVE || currentStatus == SubscriptionStatus.PAUSED)
+                && subscription.getEndDate() != null
+                && subscription.getEndDate().isBefore(today)) {
+            
+            log.warn("Subscription {} has expired (endDate: {}, current status: {}). Auto-updating to EXPIRED.",
+                    subscription.getSubscriptionId(), subscription.getEndDate(), currentStatus);
+
+            SubscriptionStatus oldStatus = subscription.getStatus();
+            subscription.setStatus(SubscriptionStatus.EXPIRED);
+            subscription.setAutoRenewEnabled(false);
+
+            subscription = subscriptionRepository.save(subscription);
+
+            // Créer un enregistrement d'historique
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("reason", "End date passed");
+            metadata.put("endDate", subscription.getEndDate().toString());
+            createHistoryRecord(subscription, oldStatus, SubscriptionStatus.EXPIRED,
+                    "SUBSCRIPTION_AUTO_EXPIRED", metadata);
+
+            log.info("Subscription {} status updated from {} to EXPIRED", 
+                    subscription.getSubscriptionId(), oldStatus);
+        }
     }
 
     private void createHistoryRecord(Subscription subscription, SubscriptionStatus oldStatus,

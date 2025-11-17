@@ -96,7 +96,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Response** : `201 Created`
 ```json
 {
-  "planId": "550e8400-e29b-41d4-a716-446655440000",
+  "planId": 1,
   "planCode": "MONTHLY_PREMIUM",
   "description": "Abonnement mensuel premium",
   "durationDays": 30,
@@ -120,7 +120,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
 ```json
 [
   {
-    "planId": "550e8400-e29b-41d4-a716-446655440000",
+    "planId": 1,
     "planCode": "MONTHLY_PREMIUM",
     "description": "Abonnement mensuel premium",
     "durationDays": 30,
@@ -145,7 +145,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
 ```json
 [
   {
-    "planId": "550e8400-e29b-41d4-a716-446655440000",
+    "planId": 1,
     "planCode": "MONTHLY_PREMIUM",
     "description": "Abonnement mensuel premium",
     "durationDays": 30,
@@ -167,12 +167,12 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Récupère un plan spécifique par son ID.
 
 **Path Parameters** :
-- `id` : UUID du plan
+- `id` : Integer - ID du plan
 
 **Response** : `200 OK`
 ```json
 {
-  "planId": "550e8400-e29b-41d4-a716-446655440000",
+  "planId": 1,
   "planCode": "MONTHLY_PREMIUM",
   "description": "Abonnement mensuel premium",
   "durationDays": 30,
@@ -201,7 +201,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Response** : `200 OK`
 ```json
 {
-  "planId": "550e8400-e29b-41d4-a716-446655440000",
+  "planId": 1,
   "planCode": "MONTHLY_PREMIUM",
   "description": "Abonnement mensuel premium",
   "durationDays": 30,
@@ -225,7 +225,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Met à jour un plan existant.
 
 **Path Parameters** :
-- `id` : UUID du plan
+- `id` : Integer - ID du plan
 
 **Request Body** : (identique à la création)
 ```json
@@ -242,7 +242,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Response** : `200 OK`
 ```json
 {
-  "planId": "550e8400-e29b-41d4-a716-446655440000",
+  "planId": 1,
   "planCode": "MONTHLY_PREMIUM_V2",
   "description": "Abonnement mensuel premium - Version 2",
   "durationDays": 30,
@@ -266,7 +266,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Désactive un plan (soft delete). Le plan n'est pas supprimé physiquement, mais `isActive` est mis à `false`.
 
 **Path Parameters** :
-- `id` : UUID du plan
+- `id` : Integer - ID du plan
 
 **Response** : `204 No Content`
 
@@ -286,8 +286,8 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Request Body** :
 ```json
 {
-  "userId": "123e4567-e89b-12d3-a456-426614174000",
-  "planId": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": 100,
+  "planId": 1,
   "cardToken": "tok_visa",
   "cardExpMonth": 12,
   "cardExpYear": 2025,
@@ -297,8 +297,8 @@ Toutes les erreurs retournent un objet JSON standardisé :
 ```
 
 **Validation** :
-- `userId` : Requis, UUID
-- `planId` : Requis, UUID
+- `userId` : Requis, Integer
+- `planId` : Requis, Integer
 - `cardToken` : Requis, max 128 caractères (token Stripe en prod, "tok_visa" en dev)
 - `cardExpMonth` : Requis, entre 1 et 12
 - `cardExpYear` : Requis, >= 2025
@@ -308,10 +308,10 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Response** : `201 Created`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
-  "userId": "123e4567-e89b-12d3-a456-426614174000",
+  "subscriptionId": 1,
+  "userId": 100,
   "plan": {
-    "planId": "550e8400-e29b-41d4-a716-446655440000",
+    "planId": 1,
     "planCode": "MONTHLY_PREMIUM",
     "description": "Abonnement mensuel premium",
     "durationDays": 30,
@@ -321,7 +321,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
     "createdAt": "2025-01-14T10:30:00Z",
     "updatedAt": "2025-01-14T10:30:00Z"
   },
-  "planId": "550e8400-e29b-41d4-a716-446655440000",
+  "planId": 1,
   "planCode": "MONTHLY_PREMIUM",
   "currency": "EUR",
   "status": "ACTIVE",
@@ -353,15 +353,15 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Récupère un abonnement spécifique.
 
 **Path Parameters** :
-- `id` : UUID de l'abonnement
+- `id` : Integer - ID de l'abonnement
 
 **Response** : `200 OK`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
-  "userId": "123e4567-e89b-12d3-a456-426614174000",
+  "subscriptionId": 1,
+  "userId": 100,
   "plan": {
-    "planId": "550e8400-e29b-41d4-a716-446655440000",
+    "planId": 1,
     "planCode": "MONTHLY_PREMIUM",
     "description": "Abonnement mensuel premium",
     "durationDays": 30,
@@ -371,7 +371,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
     "createdAt": "2025-01-14T10:30:00Z",
     "updatedAt": "2025-01-14T10:30:00Z"
   },
-  "planId": "550e8400-e29b-41d4-a716-446655440000",
+  "planId": 1,
   "planCode": "MONTHLY_PREMIUM",
   "currency": "EUR",
   "status": "ACTIVE",
@@ -398,14 +398,14 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Récupère tous les abonnements d'un utilisateur (triés par date de création décroissante).
 
 **Path Parameters** :
-- `userId` : UUID de l'utilisateur
+- `userId` : Integer - ID de l'utilisateur
 
 **Response** : `200 OK`
 ```json
 [
   {
-    "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
-    "userId": "123e4567-e89b-12d3-a456-426614174000",
+    "subscriptionId": 1,
+    "userId": 100,
     "plan": { ... },
     "status": "ACTIVE",
     "startDate": "2025-01-14",
@@ -417,6 +417,34 @@ Toutes les erreurs retournent un objet JSON standardisé :
 
 ---
 
+### 3.1. Obtenir les abonnements actifs d'un utilisateur
+
+**Endpoint** : `GET /api/subscriptions/user/{userId}/active`
+
+**Description** : Récupère uniquement les abonnements actifs d'un utilisateur.
+
+**Path Parameters** :
+- `userId` : Integer - ID de l'utilisateur
+
+**Response** : `200 OK`
+```json
+[
+  {
+    "subscriptionId": 1,
+    "userId": 100,
+    "plan": { ... },
+    "status": "ACTIVE",
+    "startDate": "2025-01-14",
+    "endDate": "2025-02-13",
+    ...
+  }
+]
+```
+
+**Note** : Retourne uniquement les abonnements avec le statut `ACTIVE` et non supprimés.
+
+---
+
 ### 4. Annuler un abonnement
 
 **Endpoint** : `PUT /api/subscriptions/{id}/cancel`
@@ -424,26 +452,26 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Annule un abonnement. Le statut passe à `CANCELLED`. Option de remboursement disponible.
 
 **Path Parameters** :
-- `id` : UUID de l'abonnement
+- `id` : Integer - ID de l'abonnement
 
 **Request Body** :
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "reason": "User requested cancellation",
   "refundRequested": false
 }
 ```
 
 **Validation** :
-- `subscriptionId` : Requis, UUID (doit correspondre au path parameter)
+- `subscriptionId` : Requis, Integer (doit correspondre au path parameter)
 - `reason` : Optionnel, texte libre
 - `refundRequested` : Optionnel, défaut `false`
 
 **Response** : `200 OK`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "status": "CANCELLED",
   ...
 }
@@ -462,12 +490,12 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Renouvelle un abonnement. Utilise la méthode de paiement stockée ou une nouvelle carte.
 
 **Path Parameters** :
-- `id` : UUID de l'abonnement
+- `id` : Integer - ID de l'abonnement
 
 **Request Body** :
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "useStoredPaymentMethod": true,
   "newCardToken": null,
   "newCardExpMonth": null,
@@ -476,14 +504,14 @@ Toutes les erreurs retournent un objet JSON standardisé :
 ```
 
 **Validation** :
-- `subscriptionId` : Requis, UUID
+- `subscriptionId` : Requis, Integer
 - `useStoredPaymentMethod` : Optionnel, défaut `true`
 - Si `useStoredPaymentMethod` est `false`, `newCardToken`, `newCardExpMonth`, `newCardExpYear` sont requis
 
 **Response** : `200 OK`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "status": "ACTIVE",
   "endDate": "2025-03-15",
   "nextBillingDate": "2025-03-15",
@@ -505,12 +533,12 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Met en pause un abonnement actif. Le statut passe à `PAUSED`.
 
 **Path Parameters** :
-- `id` : UUID de l'abonnement
+- `id` : Integer - ID de l'abonnement
 
 **Response** : `200 OK`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "status": "PAUSED",
   ...
 }
@@ -529,12 +557,12 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Reprend un abonnement en pause. Le statut passe à `ACTIVE`.
 
 **Path Parameters** :
-- `id` : UUID de l'abonnement
+- `id` : Integer - ID de l'abonnement
 
 **Response** : `200 OK`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "status": "ACTIVE",
   ...
 }
@@ -553,13 +581,13 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Récupère le QR code d'un abonnement actif.
 
 **Path Parameters** :
-- `id` : UUID de l'abonnement
+- `id` : Integer - ID de l'abonnement
 
 **Response** : `200 OK`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
-  "qrCodeData": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
+  "qrCodeData": "SUB_1_1234567890",
   "qrCodeImageBase64": "iVBORw0KGgoAAAANSUhEUgAA..."
 }
 ```
@@ -577,7 +605,7 @@ Toutes les erreurs retournent un objet JSON standardisé :
 **Description** : Valide un QR code et vérifie que l'abonnement est actif.
 
 **Query Parameters** :
-- `qrCodeData` : Données du QR code (UUID de l'abonnement)
+- `qrCodeData` : Données du QR code (encodées en base64, contient l'ID de l'abonnement)
 
 **Response** : `200 OK`
 ```json
@@ -599,7 +627,7 @@ false
 **Description** : Met à jour les informations d'un abonnement (auto-renew, etc.).
 
 **Path Parameters** :
-- `id` : UUID de l'abonnement
+- `id` : Integer - ID de l'abonnement
 
 **Request Body** :
 ```json
@@ -611,7 +639,7 @@ false
 **Response** : `200 OK`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "autoRenewEnabled": false,
   ...
 }
@@ -626,12 +654,12 @@ false
 **Description** : Réessaye le paiement pour un abonnement en statut `PENDING`.
 
 **Path Parameters** :
-- `id` : UUID de l'abonnement
+- `id` : Integer - ID de l'abonnement
 
 **Request Body** :
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "amount": 29.99,
   "currency": "EUR",
   "paymentMethod": "CARD",
@@ -642,7 +670,7 @@ false
 ```
 
 **Validation** :
-- `subscriptionId` : Requis, UUID (doit correspondre au path parameter)
+- `subscriptionId` : Requis, Integer (doit correspondre au path parameter)
 - `amount` : Requis, > 0
 - `currency` : Requis, 3 caractères majuscules
 - `paymentMethod` : Requis
@@ -653,7 +681,7 @@ false
 **Response** : `200 OK`
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "status": "ACTIVE",
   ...
 }
@@ -677,7 +705,7 @@ false
 **Request Body** :
 ```json
 {
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "subscriptionId": 1,
   "amount": 29.99,
   "currency": "EUR",
   "paymentMethod": "CARD",
@@ -688,7 +716,7 @@ false
 ```
 
 **Validation** :
-- `subscriptionId` : Requis, UUID
+- `subscriptionId` : Requis, Integer
 - `amount` : Requis, > 0, format décimal (2 décimales)
 - `currency` : Requis, 3 caractères majuscules (ISO 4217)
 - `paymentMethod` : Requis, voir [PaymentMethod](#paymentmethod)
@@ -699,8 +727,8 @@ false
 **Response** : `201 Created`
 ```json
 {
-  "paymentId": "770e8400-e29b-41d4-a716-446655440000",
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "paymentId": 1,
+  "subscriptionId": 1,
   "amount": 29.99,
   "currency": "EUR",
   "paymentStatus": "SUCCEEDED",
@@ -728,14 +756,14 @@ false
 **Description** : Récupère tous les paiements d'un abonnement (triés par date décroissante).
 
 **Path Parameters** :
-- `subscriptionId` : UUID de l'abonnement
+- `subscriptionId` : Integer - ID de l'abonnement
 
 **Response** : `200 OK`
 ```json
 [
   {
-    "paymentId": "770e8400-e29b-41d4-a716-446655440000",
-    "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+    "paymentId": 1,
+    "subscriptionId": 1,
     "amount": 29.99,
     "currency": "EUR",
     "paymentStatus": "SUCCEEDED",
@@ -758,13 +786,13 @@ false
 **Description** : Récupère un paiement spécifique.
 
 **Path Parameters** :
-- `id` : UUID du paiement
+- `id` : Integer - ID du paiement
 
 **Response** : `200 OK`
 ```json
 {
-  "paymentId": "770e8400-e29b-41d4-a716-446655440000",
-  "subscriptionId": "660e8400-e29b-41d4-a716-446655440000",
+  "paymentId": 1,
+  "subscriptionId": 1,
   "amount": 29.99,
   "currency": "EUR",
   "paymentStatus": "SUCCEEDED",
@@ -789,7 +817,7 @@ false
 **Description** : Rembourse un paiement réussi.
 
 **Path Parameters** :
-- `id` : UUID du paiement
+- `id` : Integer - ID du paiement
 
 **Query Parameters** :
 - `reason` : Optionnel, raison du remboursement
@@ -797,7 +825,7 @@ false
 **Response** : `200 OK`
 ```json
 {
-  "paymentId": "770e8400-e29b-41d4-a716-446655440000",
+  "paymentId": 1,
   "paymentStatus": "REFUNDED",
   ...
 }
@@ -893,7 +921,7 @@ const subscriptionResponse = await fetch('http://localhost:8085/api/subscription
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    userId: '123e4567-e89b-12d3-a456-426614174000',
+    userId: 100,
     planId: selectedPlan.planId,
     cardToken: 'tok_visa', // En dev, utilisez 'tok_visa'. En prod, token Stripe
     cardExpMonth: 12,

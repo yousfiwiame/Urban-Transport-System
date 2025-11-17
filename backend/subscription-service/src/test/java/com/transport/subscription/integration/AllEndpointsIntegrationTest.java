@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -47,14 +46,14 @@ class AllEndpointsIntegrationTest {
 
 
     // Données de test réutilisables
-    private static UUID testPlanId;
-    private static UUID testSubscriptionId;
-    private static UUID testUserId;
+    private static Integer testPlanId;
+    private static Integer testSubscriptionId;
+    private static Integer testUserId;
     private static String testPlanCode = "TEST_MONTHLY_" + System.currentTimeMillis();
 
     @BeforeAll
     static void setUp() {
-        testUserId = UUID.randomUUID();
+        testUserId = 100;
     }
 
     @Test
@@ -95,7 +94,7 @@ class AllEndpointsIntegrationTest {
         mockMvc.perform(get("/api/subscriptions/plans/{id}", testPlanId))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.planId").value(testPlanId.toString()))
+                .andExpect(jsonPath("$.planId").value(testPlanId))
                 .andExpect(jsonPath("$.planCode").value(testPlanCode))
                 .andExpect(jsonPath("$.price").value(200.00));
     }
@@ -132,8 +131,8 @@ class AllEndpointsIntegrationTest {
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.subscriptionId").exists())
-                .andExpect(jsonPath("$.userId").value(testUserId.toString()))
-                .andExpect(jsonPath("$.planId").value(testPlanId.toString()))
+                .andExpect(jsonPath("$.userId").value(testUserId))
+                .andExpect(jsonPath("$.planId").value(testPlanId))
                 .andExpect(jsonPath("$.status").value(anyOf(
                         is(SubscriptionStatus.ACTIVE.name()),
                         is(SubscriptionStatus.PENDING.name()))))
@@ -153,9 +152,9 @@ class AllEndpointsIntegrationTest {
         mockMvc.perform(get("/api/subscriptions/{id}", testSubscriptionId))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionId").value(testSubscriptionId.toString()))
-                .andExpect(jsonPath("$.userId").value(testUserId.toString()))
-                .andExpect(jsonPath("$.planId").value(testPlanId.toString()));
+                .andExpect(jsonPath("$.subscriptionId").value(testSubscriptionId))
+                .andExpect(jsonPath("$.userId").value(testUserId))
+                .andExpect(jsonPath("$.planId").value(testPlanId));
     }
 
     @Test
@@ -167,7 +166,7 @@ class AllEndpointsIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].subscriptionId").exists())
-                .andExpect(jsonPath("$[0].userId").value(testUserId.toString()));
+                .andExpect(jsonPath("$[0].userId").value(testUserId));
     }
 
     @Test
@@ -177,7 +176,7 @@ class AllEndpointsIntegrationTest {
         mockMvc.perform(get("/api/subscriptions/{id}/qrcode", testSubscriptionId))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionId").value(testSubscriptionId.toString()))
+                .andExpect(jsonPath("$.subscriptionId").value(testSubscriptionId))
                 .andExpect(jsonPath("$.qrCodeData").exists());
     }
 
@@ -217,7 +216,7 @@ class AllEndpointsIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionId").value(testSubscriptionId.toString()));
+                .andExpect(jsonPath("$.subscriptionId").value(testSubscriptionId));
     }
 
     @Test
@@ -251,7 +250,7 @@ class AllEndpointsIntegrationTest {
     void test12_RetryPayment() throws Exception {
         // Créer une subscription PENDING pour tester le retry
         CreateSubscriptionRequest createRequest = CreateSubscriptionRequest.builder()
-                .userId(UUID.randomUUID())
+                .userId(200)
                 .planId(testPlanId)
                 .cardToken("tok_visa_test")
                 .cardExpMonth(12)
@@ -267,8 +266,7 @@ class AllEndpointsIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        UUID pendingSubscriptionId = UUID.fromString(
-                objectMapper.readTree(createResponse).get("subscriptionId").asText());
+        Integer pendingSubscriptionId = objectMapper.readTree(createResponse).get("subscriptionId").asInt();
 
         // Tester le retry payment
         ProcessPaymentRequest paymentRequest = ProcessPaymentRequest.builder()
@@ -277,7 +275,7 @@ class AllEndpointsIntegrationTest {
                 .currency("MAD")
                 .paymentMethod(PaymentMethod.CARD)
                 .cardToken("tok_visa_test")
-                .idempotencyKey(UUID.randomUUID().toString())
+                .idempotencyKey(java.util.UUID.randomUUID().toString())
                 .build();
 
         mockMvc.perform(post("/api/subscriptions/{id}/retry-payment", pendingSubscriptionId)
@@ -285,7 +283,7 @@ class AllEndpointsIntegrationTest {
                         .content(objectMapper.writeValueAsString(paymentRequest)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionId").value(pendingSubscriptionId.toString()));
+                .andExpect(jsonPath("$.subscriptionId").value(pendingSubscriptionId));
     }
 
     @Test
@@ -302,7 +300,7 @@ class AllEndpointsIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionId").value(testSubscriptionId.toString()));
+                .andExpect(jsonPath("$.subscriptionId").value(testSubscriptionId));
     }
 
     @Test
@@ -351,7 +349,7 @@ class AllEndpointsIntegrationTest {
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.planId").value(testPlanId.toString()))
+                .andExpect(jsonPath("$.planId").value(testPlanId))
                 .andExpect(jsonPath("$.price").value(250.00));
     }
 

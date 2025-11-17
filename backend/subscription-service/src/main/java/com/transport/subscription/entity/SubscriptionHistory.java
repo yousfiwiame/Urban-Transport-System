@@ -7,13 +7,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
-import java.util.UUID;
 
 @Entity
 @Table(name = "subscription_history", indexes = {
@@ -27,10 +25,9 @@ import java.util.UUID;
 public class SubscriptionHistory {
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "history_id", updatable = false, nullable = false)
-    private UUID historyId;
+    private Integer historyId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_id", nullable = false, foreignKey = @ForeignKey(name = "fk_history_subscription"))
@@ -57,7 +54,7 @@ public class SubscriptionHistory {
     private OffsetDateTime eventDate = OffsetDateTime.now();
 
     @Column(name = "performed_by")
-    private UUID performedBy;
+    private Integer performedBy;
 
     @Column(name = "details", columnDefinition = "TEXT")
     private String details;

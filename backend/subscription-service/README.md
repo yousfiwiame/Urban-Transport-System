@@ -153,7 +153,7 @@ Le service utilise des variables d'environnement pour la configuration. Créez u
 # Database Configuration
 DATABASE_URL=jdbc:postgresql://localhost:5432/subscription_service
 DATABASE_USERNAME=postgres
-DATABASE_PASSWORD=postgres
+DATABASE_PASSWORD=akb
 
 # Server Configuration
 SERVER_PORT=8085

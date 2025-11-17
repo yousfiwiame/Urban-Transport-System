@@ -9,12 +9,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface SubscriptionPaymentRepository extends JpaRepository<SubscriptionPayment, UUID> {
+public interface SubscriptionPaymentRepository extends JpaRepository<SubscriptionPayment, Integer> {
 
-    List<SubscriptionPayment> findBySubscription_SubscriptionId(UUID subscriptionId);
+    List<SubscriptionPayment> findBySubscription_SubscriptionId(Integer subscriptionId);
 
     List<SubscriptionPayment> findByPaymentStatus(PaymentStatus paymentStatus);
 
@@ -28,14 +27,14 @@ public interface SubscriptionPaymentRepository extends JpaRepository<Subscriptio
            "WHERE p.subscription.subscriptionId = :subscriptionId " +
            "ORDER BY p.paymentDate DESC")
     List<SubscriptionPayment> findBySubscriptionIdOrderByPaymentDateDesc(
-            @Param("subscriptionId") UUID subscriptionId
+            @Param("subscriptionId") Integer subscriptionId
     );
 
     @Query("SELECT COALESCE(SUM(p.amount), 0.0) FROM SubscriptionPayment p " +
            "WHERE p.subscription.subscriptionId = :subscriptionId " +
            "AND p.paymentStatus = :status")
     Double calculateTotalPaidAmount(
-            @Param("subscriptionId") UUID subscriptionId,
+            @Param("subscriptionId") Integer subscriptionId,
             @Param("status") PaymentStatus status
     );
 }

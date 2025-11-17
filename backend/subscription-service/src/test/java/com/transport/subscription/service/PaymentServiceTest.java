@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.UUID; // Keep for UUID.randomUUID() for idempotency keys
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,8 +48,8 @@ class PaymentServiceTest {
     @BeforeEach
     void setUp() {
         testSubscription = Subscription.builder()
-                .subscriptionId(UUID.randomUUID())
-                .userId(UUID.randomUUID())
+                .subscriptionId(1)
+                .userId(100)
                 .build();
 
         testRequest = ProcessPaymentRequest.builder()
@@ -75,7 +75,7 @@ class PaymentServiceTest {
         when(paymentRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(paymentMapper.toResponse(any())).thenReturn(
                 PaymentResponse.builder()
-                        .paymentId(UUID.randomUUID())
+                        .paymentId(1)
                         .paymentStatus(PaymentStatus.SUCCEEDED)
                         .build());
 
@@ -95,7 +95,7 @@ class PaymentServiceTest {
                 .thenReturn(true);
         when(paymentRepository.findByIdempotencyKey(testRequest.getIdempotencyKey()))
                 .thenReturn(Optional.of(com.transport.subscription.entity.SubscriptionPayment.builder()
-                        .paymentId(UUID.randomUUID())
+                        .paymentId(1)
                         .build()));
         when(paymentMapper.toResponse(any())).thenReturn(
                 PaymentResponse.builder().build());
