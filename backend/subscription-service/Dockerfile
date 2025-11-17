@@ -36,7 +36,8 @@ FROM eclipse-temurin:17-jre-alpine
 # Metadata
 LABEL maintainer="Urban Transport System"
 LABEL description="Subscription Service Microservice"
-LABEL version="1.0"
+LABEL version="2.0"
+LABEL service="subscription-service"
 
 WORKDIR /app
 

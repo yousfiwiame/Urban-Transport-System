@@ -6,10 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPlan, UUID> {
+public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPlan, Integer> {
 
     Optional<SubscriptionPlan> findByPlanCode(String planCode);
 

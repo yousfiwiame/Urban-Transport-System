@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -36,14 +35,14 @@ public class PaymentController {
     @GetMapping("/subscription/{subscriptionId}")
     @Operation(summary = "Get all payments for a subscription")
     public ResponseEntity<List<PaymentResponse>> getPaymentsBySubscription(
-            @PathVariable UUID subscriptionId) {
+            @PathVariable Integer subscriptionId) {
         List<PaymentResponse> responses = paymentService.getPaymentsBySubscriptionId(subscriptionId);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get payment by ID")
-    public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable UUID id) {
+    public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable Integer id) {
         PaymentResponse response = paymentService.getPaymentById(id);
         return ResponseEntity.ok(response);
     }
@@ -51,7 +50,7 @@ public class PaymentController {
     @PostMapping("/{id}/refund")
     @Operation(summary = "Refund a payment")
     public ResponseEntity<PaymentResponse> refundPayment(
-            @PathVariable UUID id,
+            @PathVariable Integer id,
             @RequestParam(required = false) String reason) {
         log.info("Processing refund for payment: {}", id);
         PaymentResponse response = paymentService.refundPayment(id, reason);

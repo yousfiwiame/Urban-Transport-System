@@ -57,6 +57,14 @@ scheduler:
   renewal:
     enabled: ${SCHEDULER_RENEWAL_ENABLED:true}
     cron: ${SCHEDULER_RENEWAL_CRON:0 0 0 * * *}
+  expiration:
+    enabled: ${SCHEDULER_EXPIRATION_ENABLED:true}
+    cron: ${SCHEDULER_EXPIRATION_CRON:0 0 1 * * *}
+  cleanup:
+    enabled: ${SCHEDULER_CLEANUP_ENABLED:true}
+    cron: ${SCHEDULER_CLEANUP_CRON:0 0 2 * * *}
+    pending:
+      days: ${SCHEDULER_CLEANUP_PENDING_DAYS:7}
 
 payment:
   stripe:

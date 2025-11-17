@@ -19,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,7 +54,7 @@ class SubscriptionServiceTest {
     @BeforeEach
     void setUp() {
         testPlan = SubscriptionPlan.builder()
-                .planId(UUID.randomUUID())
+                .planId(1)
                 .planCode("MONTHLY")
                 .description("Monthly subscription")
                 .durationDays(30)
@@ -65,7 +64,7 @@ class SubscriptionServiceTest {
                 .build();
 
         testRequest = CreateSubscriptionRequest.builder()
-                .userId(UUID.randomUUID())
+                .userId(100)
                 .planId(testPlan.getPlanId())
                 .cardToken("card_token_123")
                 .cardExpMonth(12)
@@ -92,7 +91,7 @@ class SubscriptionServiceTest {
                         .build());
         when(subscriptionMapper.toResponse(any())).thenReturn(
                 SubscriptionResponse.builder()
-                        .subscriptionId(UUID.randomUUID())
+                        .subscriptionId(1)
                         .status(SubscriptionStatus.ACTIVE)
                         .build());
 

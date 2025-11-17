@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -48,7 +47,7 @@ public class PlanController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get plan by ID")
-    public ResponseEntity<PlanResponse> getPlanById(@PathVariable UUID id) {
+    public ResponseEntity<PlanResponse> getPlanById(@PathVariable Integer id) {
         PlanResponse response = planService.getPlanById(id);
         return ResponseEntity.ok(response);
     }
@@ -63,7 +62,7 @@ public class PlanController {
     @PutMapping("/{id}")
     @Operation(summary = "Update a subscription plan")
     public ResponseEntity<PlanResponse> updatePlan(
-            @PathVariable UUID id,
+            @PathVariable Integer id,
             @Valid @RequestBody CreatePlanRequest request) {
         PlanResponse response = planService.updatePlan(id, request);
         return ResponseEntity.ok(response);
@@ -75,7 +74,7 @@ public class PlanController {
             responseCode = "204",
             description = "Plan successfully deactivated"
     )
-    public ResponseEntity<Void> deletePlan(@PathVariable UUID id) {
+    public ResponseEntity<Void> deletePlan(@PathVariable Integer id) {
         log.info("Deleting plan: {}", id);
         planService.deletePlan(id);
         return ResponseEntity

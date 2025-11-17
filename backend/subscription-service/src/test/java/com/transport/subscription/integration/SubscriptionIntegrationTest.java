@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,11 +34,11 @@ class SubscriptionIntegrationTest {
     private SubscriptionRepository subscriptionRepository;
 
     private SubscriptionPlan testPlan;
-    private UUID testUserId;
+    private Integer testUserId;
 
     @BeforeEach
     void setUp() {
-        testUserId = UUID.randomUUID();
+        testUserId = 100;
         
         testPlan = SubscriptionPlan.builder()
                 .planCode("TEST_PLAN_" + System.currentTimeMillis())
@@ -147,7 +146,7 @@ class SubscriptionIntegrationTest {
                 .build();
 
         Subscription activeNoRenew = Subscription.builder()
-                .userId(UUID.randomUUID())
+                .userId(200)
                 .plan(testPlan)
                 .status(SubscriptionStatus.ACTIVE)
                 .startDate(LocalDate.now())

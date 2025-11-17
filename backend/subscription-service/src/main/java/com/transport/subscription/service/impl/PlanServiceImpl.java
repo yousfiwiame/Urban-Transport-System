@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -41,7 +40,7 @@ public class PlanServiceImpl implements PlanService {
 
     @Override
     @Transactional(readOnly = true)
-    public PlanResponse getPlanById(UUID planId) {
+    public PlanResponse getPlanById(Integer planId) {
         SubscriptionPlan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new PlanNotFoundException("Plan not found: " + planId));
         return planMapper.toResponse(plan);
@@ -70,7 +69,7 @@ public class PlanServiceImpl implements PlanService {
     }
 
     @Override
-    public PlanResponse updatePlan(UUID planId, CreatePlanRequest request) {
+    public PlanResponse updatePlan(Integer planId, CreatePlanRequest request) {
         log.info("Updating plan: {}", planId);
 
         SubscriptionPlan plan = planRepository.findById(planId)
@@ -84,7 +83,7 @@ public class PlanServiceImpl implements PlanService {
     }
 
     @Override
-    public void deletePlan(UUID planId) {
+    public void deletePlan(Integer planId) {
         log.info("Deleting plan: {}", planId);
 
         SubscriptionPlan plan = planRepository.findById(planId)

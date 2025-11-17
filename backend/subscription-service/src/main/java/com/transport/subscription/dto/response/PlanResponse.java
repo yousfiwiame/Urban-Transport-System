@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +14,7 @@ import java.util.UUID;
 @Builder
 public class PlanResponse {
 
-    private UUID planId;
+    private Integer planId;
     private String planCode;
     private String description;
     private Integer durationDays;
