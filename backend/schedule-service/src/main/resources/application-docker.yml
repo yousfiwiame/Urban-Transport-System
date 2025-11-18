@@ -1,0 +1,29 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+  
+  datasource:
+    url: jdbc:postgresql://postgres-schedule:5432/schedule_db
+    username: hiba
+    password: hiba
+
+  kafka:
+    bootstrap-servers: kafka:9092
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-registry:8761/eureka/
+
+  instance:
+    prefer-ip-address: false
+    hostname: schedule-service
+    instance-id: schedule-service:8083
