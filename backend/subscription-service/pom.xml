@@ -45,6 +45,18 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- ✅ AJOUTER EUREKA CLIENT -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <!-- ✅ AJOUTER CONFIG CLIENT -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+
         <!-- PostgreSQL Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -69,11 +81,10 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- OpenAPI Documentation - Version managed by parent POM -->
+        <!-- OpenAPI Documentation -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <!-- Version is managed by parent pom.xml (springdoc.version: 2.5.0) -->
         </dependency>
 
         <!-- Stripe Payment Gateway -->
@@ -95,8 +106,7 @@
             <version>${zxing.version}</version>
         </dependency>
 
-        <!-- Kafka (Optional - only loaded if spring.kafka.bootstrap-servers is set) -->
-        <!-- Version override: using 3.3.0 instead of parent's version -->
+        <!-- Kafka -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
@@ -172,4 +182,3 @@
         </plugins>
     </build>
 </project>
-

@@ -27,13 +27,33 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
+server:
+  port: 8085
+
 eureka:
   client:
+    enabled: true
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
-      defaultZone: http://service-registry:8761/eureka/
-
+      defaultZone: http://eureka:eureka123@service-registry:8761/eureka/
   instance:
     prefer-ip-address: false
     hostname: subscription-service
     instance-id: subscription-service:8085
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.transport.subscription: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: WARN

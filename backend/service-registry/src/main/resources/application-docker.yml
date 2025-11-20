@@ -2,6 +2,11 @@ spring:
   application:
     name: service-registry
   
+  security:
+    user:
+      name: eureka
+      password: eureka123
+
   cloud:
     config:
       enabled: false
@@ -9,7 +14,7 @@ spring:
         enabled: false
 
 server:
-    port: 8761
+  port: 8761
 
 eureka:
   instance:
@@ -28,8 +33,8 @@ eureka:
 management:
   endpoints:
     web:
-        exposure:
-            include: health,info,metrics,prometheus
+      exposure:
+        include: health,info,metrics,prometheus
   endpoint:
     health:
-        show-details: always
+      show-details: always

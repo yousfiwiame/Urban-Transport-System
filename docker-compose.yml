@@ -1,4 +1,3 @@
-
 services:
   # Service Registry (Eureka)
   service-registry:
@@ -11,6 +10,8 @@ services:
       - "8761:8761"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_SECURITY_USER_NAME=eureka
+      - SPRING_SECURITY_USER_PASSWORD=eureka123
     networks:
       - transport-network
     healthcheck:
@@ -32,9 +33,10 @@ services:
       - "8888:8888"
     environment:
       - SPRING_PROFILES_ACTIVE=native,docker
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:eureka123@service-registry:8761/eureka/
     depends_on:
-      - service-registry
+      service-registry:
+        condition: service_healthy
     networks:
       - transport-network
     healthcheck:
@@ -176,7 +178,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-user:5432/user_db
       - SPRING_DATASOURCE_USERNAME=hiba
       - SPRING_DATASOURCE_PASSWORD=hiba
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:eureka123@service-registry:8761/eureka/
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
@@ -206,10 +208,12 @@ services:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SPRING_CLOUD_CONFIG_IMPORT_CHECK_ENABLED=false
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-schedule:5432/schedule_db
       - SPRING_DATASOURCE_USERNAME=hiba
       - SPRING_DATASOURCE_PASSWORD=hiba
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:eureka123@service-registry:8761/eureka/
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
@@ -221,13 +225,12 @@ services:
     networks:
       - transport-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8083/actuator/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 60s
     restart: unless-stopped
-
   # Subscription Service
   subscription-service:
     build:
@@ -239,10 +242,15 @@ services:
       - "8085:8085"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SPRING_CLOUD_CONFIG_IMPORT_CHECK_ENABLED=false
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-subscription:5432/subscription_service
       - SPRING_DATASOURCE_USERNAME=hiba
       - SPRING_DATASOURCE_PASSWORD=hiba
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:eureka123@service-registry:8761/eureka/  # ← Ajouter cette ligne
+      - EUREKA_CLIENT_ENABLED=true
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - EUREKA_INSTANCE_HOSTNAME=subscription-service
     depends_on:
       postgres-subscription:
         condition: service_healthy
@@ -251,13 +259,12 @@ services:
     networks:
       - transport-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8085/actuator/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 60s
     restart: unless-stopped
-
   # Ticket Service
   ticket-service:
     build:
@@ -269,16 +276,24 @@ services:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SPRING_CLOUD_CONFIG_IMPORT_CHECK_ENABLED=false
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-ticket:5432/ticket-service-db
       - SPRING_DATASOURCE_USERNAME=hiba
       - SPRING_DATASOURCE_PASSWORD=hiba
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:eureka123@service-registry:8761/eureka/
+      - EUREKA_CLIENT_ENABLED=true
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - EUREKA_INSTANCE_HOSTNAME=ticket-service
     depends_on:
       postgres-ticket:
+        condition: service_healthy
+      service-registry:
         condition: service_healthy
     networks:
       - transport-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      test: [ "CMD", "curl", "-f", "-u", "admin:admin123", "http://localhost:8082/actuator/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -297,19 +312,21 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATA_MONGODB_URI=mongodb://hiba:hiba@mongodb:27017/geolocation_db?authSource=admin
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:eureka123@service-registry:8761/eureka/
     depends_on:
       mongodb:
+        condition: service_healthy
+      service-registry:
         condition: service_healthy
     networks:
       - transport-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 60s
     restart: unless-stopped
-
   # API Gateway
   api-gateway:
     build:
@@ -321,7 +338,7 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka/
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:eureka123@service-registry:8761/eureka/
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
     depends_on:
@@ -410,4 +427,3 @@ volumes:
 networks:
   transport-network:
     driver: bridge
-

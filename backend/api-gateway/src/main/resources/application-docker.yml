@@ -13,14 +13,17 @@ spring:
       host: redis
       port: 6379
 
+management:
+  tracing:
+    enabled: false  # ← AJOUTER CETTE LIGNE
+
 server:
   port: 8080
 
 eureka:
   client:
     service-url:
-      defaultZone: http://service-registry:8761/eureka/
-
+      defaultZone: http://eureka:eureka123@service-registry:8761/eureka/
   instance:
     prefer-ip-address: false
     hostname: api-gateway

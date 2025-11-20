@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: geolocation-service
+
+  data:
+    mongodb:
+      uri: mongodb://hiba:hiba@mongodb:27017/geolocation_db?authSource=admin
+
+eureka:
+  client:
+    enabled: true
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka:eureka123@service-registry:8761/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: geolocation-service
+    instance-id: geolocation-service:8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.geolocation: DEBUG
+    root: INFO

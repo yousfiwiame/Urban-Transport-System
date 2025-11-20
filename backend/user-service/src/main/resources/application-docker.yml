@@ -10,6 +10,16 @@ spring:
     username: hiba
     password: hiba
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true  # ← AJOUTER CETTE LIGNE
+
+  sql:
+    init:
+      mode: always                            # ← AJOUTER
+      data-locations: classpath:data-docker.sql  # ← AJOUTER
+
   kafka:
     bootstrap-servers: kafka:9092
 
@@ -21,8 +31,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://service-registry:8761/eureka/
-
+      defaultZone: http://eureka:eureka123@service-registry:8761/eureka/
   instance:
     prefer-ip-address: false
     hostname: user-service

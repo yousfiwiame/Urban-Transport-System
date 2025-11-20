@@ -1,6 +1,7 @@
 # Multi-stage build for ticket-service
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 
+# FORCE REBUILD - v2.0
 WORKDIR /app
 
 # Copy service pom.xml (ticket-service is standalone)
@@ -13,7 +14,7 @@ RUN mvn dependency:go-offline -B -f ticket-service/pom.xml
 COPY ticket-service/src ./ticket-service/src
 
 # Build the application
-RUN mvn clean package -DskipTests -B -f ticket-service/pom.xml
+RUN mvn clean package -DskipTests -B -f ticket-service/pom.xml -U
 
 # Verify the JAR was created
 RUN test -f /app/ticket-service/target/ticket-service-*.jar || (echo "JAR file not found!" && exit 1)
