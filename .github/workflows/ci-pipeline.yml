@@ -2,7 +2,7 @@ name: Backend CI Pipeline
 
 on:
   push:
-    branches: [ main, develop, add-ci-pipeline ]  # Added your branch to test
+    branches: [ main, develop, add-cicd-pipeline ]  # Added your branch to test
     paths:
       - 'backend/**'
       - '.github/workflows/**'
