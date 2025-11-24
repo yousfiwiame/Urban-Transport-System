@@ -118,6 +118,29 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+# PostgreSQL Database for Notification  Service
+  postgres-notification:
+    image: postgres:15-alpine
+    container_name: postgres-notification
+    environment:
+      - POSTGRES_DB=notification_service
+      - POSTGRES_USER=hiba
+      - POSTGRES_PASSWORD=hiba
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres-notification-data:/var/lib/postgresql/data
+      - ./backend/notification-service/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+    networks:
+      - transport-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hiba -d notification_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
 
   # PostgreSQL Database for Ticket Service
   postgres-ticket:
@@ -157,11 +180,11 @@ services:
     networks:
       - transport-network
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping')\" > /dev/null"]
+      interval: 20s
+      timeout: 15s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
 
   # User Service
@@ -358,6 +381,53 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./backend
+      dockerfile: notification-service/Dockerfile
+    container_name: notification-service
+    image: notification-service:latest
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SPRING_CLOUD_CONFIG_IMPORT_CHECK_ENABLED=false
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-notification:5432/notification_service
+      - SPRING_DATASOURCE_USERNAME=hiba
+      - SPRING_DATASOURCE_PASSWORD=hiba
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:eureka123@service-registry:8761/eureka/
+      - EUREKA_CLIENT_ENABLED=true
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - EUREKA_INSTANCE_HOSTNAME=notification-service
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM=notifications@transport.com
+      - SMS_ENABLED=false
+      - PUSH_ENABLED=false
+      - SERVER_PORT=8086
+    depends_on:
+      postgres-notification:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - transport-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
   # Redis (for caching and rate limiting)
   redis:
     image: redis:7-alpine
@@ -423,6 +493,8 @@ volumes:
     driver: local
   redis-data:
     driver: local
+  postgres-notification-data:
+    driver: local  
 
 networks:
   transport-network:
