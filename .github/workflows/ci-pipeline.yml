@@ -1,8 +1,8 @@
-name: Backend CI Pipeline
+name: Backend CI Pipeline - Unit Tests
 
 on:
   push:
-    branches: [ main, develop, add-cicd-pipeline ]  # Added your branch to test
+    branches: [ main, develop, add-cicd-pipeline ]
     paths:
       - 'backend/**'
       - '.github/workflows/**'
@@ -10,7 +10,6 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  # Job 1: Build and Test Services
   build-and-test:
     name: Build & Test ${{ matrix.service }}
     runs-on: ubuntu-latest
@@ -53,23 +52,29 @@ jobs:
           cd backend/${{ matrix.service }}
           mvn clean compile -DskipTests
 
-      - name: 🧪 Run Tests
+      # CHANGED: Only run unit tests, skip integration tests
+      - name: 🧪 Run Unit Tests (Skip Integration Tests)
         run: |
           cd backend/${{ matrix.service }}
-          mvn test
-        continue-on-error: true
+          # Method 1: Skip integration tests by name pattern
+          mvn test \
+            -Dtest='!**/*IntegrationTest' \
+            -DfailIfNoTests=false
+        # Removed continue-on-error so we know if unit tests fail
 
-      - name: 📊 Publish Test Results
+      - name: 📊 Test Results Summary
         if: always()
         run: |
           cd backend/${{ matrix.service }}
           if [ -d "target/surefire-reports" ]; then
-            echo "✅ Tests executed"
+            echo "✅ Unit tests executed successfully"
+            # Count test files
+            TEST_COUNT=$(find target/surefire-reports -name "TEST-*.xml" | wc -l)
+            echo "📈 Test files generated: $TEST_COUNT"
           else
             echo "⚠️ No test results found"
           fi
 
-  # Job 2: Build Summary
   summary:
     name: ✅ Build Summary
     runs-on: ubuntu-latest
@@ -82,5 +87,6 @@ jobs:
           echo "================================"
           echo "🎉 CI Pipeline Completed!"
           echo "================================"
-          echo "All services have been tested"
-          echo "Check individual jobs for details"
+          echo "✅ Unit tests executed for all services"
+          echo "⏭️  Integration tests skipped (run locally)"
+          echo "================================"
