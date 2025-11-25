@@ -18,8 +18,8 @@ public class PositionBusService {
         return positionBusRepository.findAll();
     }
 
-    public List<PositionBus> getPositionsByBusId(String busId) {
-        return positionBusRepository.findByBusIdBus(busId);
+    public List<PositionBus> getPositionsByBusId(Long busId) {
+        return positionBusRepository.findByBusId(busId);
     }
 
     public PositionBus addPosition(PositionBus positionBus) {

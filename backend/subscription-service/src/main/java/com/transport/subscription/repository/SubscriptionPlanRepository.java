@@ -18,5 +18,13 @@ public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPl
     boolean existsByPlanCode(String planCode);
 
     List<SubscriptionPlan> findByIsActive(Boolean isActive);
+
+    /**
+     * Counts active plans.
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of active plans
+     */
+    long countByIsActiveTrue();
 }
 

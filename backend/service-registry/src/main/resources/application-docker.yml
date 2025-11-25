@@ -1,6 +1,13 @@
 spring:
   application:
     name: service-registry
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    compatibility-verifier:
+      enabled: false
 
 server:
     port: 8761

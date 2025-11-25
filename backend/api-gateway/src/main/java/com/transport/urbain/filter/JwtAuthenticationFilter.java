@@ -79,9 +79,15 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+            String path = request.getPath().toString();
 
             // Skip authentication for public endpoints
-            if (isPublicEndpoint(request.getPath().toString())) {
+            if (isPublicEndpoint(path)) {
+                return chain.filter(exchange);
+            }
+
+            // Skip authentication for OPTIONS requests (CORS preflight)
+            if (request.getMethod() != null && request.getMethod().name().equals("OPTIONS")) {
                 return chain.filter(exchange);
             }
 
@@ -100,11 +106,16 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             try {
                 Claims claims = validateToken(token);
 
+                // Extract roles from claims (it's an array)
+                @SuppressWarnings("unchecked")
+                java.util.List<String> roles = claims.get("roles", java.util.List.class);
+                String rolesString = roles != null ? String.join(",", roles) : "";
+
                 // Add user information to request headers
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-User-Id", claims.getSubject())
                         .header("X-User-Email", claims.get("email", String.class))
-                        .header("X-User-Role", claims.get("role", String.class))
+                        .header("X-User-Role", rolesString)
                         .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
@@ -144,9 +155,11 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
      */
     private boolean isPublicEndpoint(String path) {
         return path.contains("/auth/") ||
+                path.contains("/api/auth/") ||
                 path.contains("/actuator/") ||
                 path.contains("/public/") ||
-                path.equals("/");
+                path.equals("/") ||
+                path.startsWith("/api/auth");
     }
 
     /**

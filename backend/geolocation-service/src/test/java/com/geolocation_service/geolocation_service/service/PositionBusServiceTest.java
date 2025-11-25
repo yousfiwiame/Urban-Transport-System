@@ -66,16 +66,17 @@ class PositionBusServiceTest {
     @Test
     void testGetPositionsByBusId() {
         // Given
+        testPosition.setBusId(1L); // Utiliser le nouveau système
         List<PositionBus> positions = Arrays.asList(testPosition);
-        when(positionBusRepository.findByBusIdBus("bus-1")).thenReturn(positions);
+        when(positionBusRepository.findByBusId(1L)).thenReturn(positions);
 
         // When
-        List<PositionBus> result = positionBusService.getPositionsByBusId("bus-1");
+        List<PositionBus> result = positionBusService.getPositionsByBusId(1L);
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getBus().getIdBus()).isEqualTo("bus-1");
-        verify(positionBusRepository, times(1)).findByBusIdBus("bus-1");
+        assertThat(result.get(0).getBusId()).isEqualTo(1L);
+        verify(positionBusRepository, times(1)).findByBusId(1L);
     }
 
     @Test

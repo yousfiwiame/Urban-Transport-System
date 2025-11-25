@@ -3,6 +3,7 @@ package com.transport.urbain.controller;
 import com.transport.urbain.dto.request.ChangePasswordRequest;
 import com.transport.urbain.dto.request.UpdateProfileRequest;
 import com.transport.urbain.dto.response.UserResponse;
+import com.transport.urbain.model.RoleName;
 import com.transport.urbain.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -205,5 +206,49 @@ public class UserController {
     public ResponseEntity<Void> unlockAccount(@PathVariable Long id) {
         userService.unlockAccount(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Adds a role to a user.
+     * 
+     * <p>This endpoint allows administrators to add a new role to an existing user.
+     * The role must be one of the predefined system roles (ADMIN, PASSENGER, DRIVER).
+     * 
+     * @param id the ID of the user
+     * @param roleName the name of the role to add
+     * @return the updated user response with new role
+     * @throws org.springframework.security.access.AccessDeniedException if the user
+     *         is not an administrator
+     */
+    @PostMapping("/{id}/roles/{roleName}")
+    @Operation(summary = "Add role to user")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> addRoleToUser(
+            @PathVariable Long id,
+            @PathVariable String roleName) {
+        RoleName role = RoleName.valueOf(roleName.toUpperCase());
+        return ResponseEntity.ok(userService.addRoleToUser(id, role));
+    }
+
+    /**
+     * Removes a role from a user.
+     * 
+     * <p>This endpoint allows administrators to remove a role from an existing user.
+     * Users must have at least one role, so the last role cannot be removed.
+     * 
+     * @param id the ID of the user
+     * @param roleName the name of the role to remove
+     * @return the updated user response without the removed role
+     * @throws org.springframework.security.access.AccessDeniedException if the user
+     *         is not an administrator
+     */
+    @DeleteMapping("/{id}/roles/{roleName}")
+    @Operation(summary = "Remove role from user")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> removeRoleFromUser(
+            @PathVariable Long id,
+            @PathVariable String roleName) {
+        RoleName role = RoleName.valueOf(roleName.toUpperCase());
+        return ResponseEntity.ok(userService.removeRoleFromUser(id, role));
     }
 }

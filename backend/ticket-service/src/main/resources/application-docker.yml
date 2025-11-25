@@ -8,6 +8,8 @@ spring:
       enabled: false
       import-check:
         enabled: false
+    compatibility-verifier:
+      enabled: false
 
   datasource:
     url: jdbc:postgresql://ticket-db:5432/ticket_db
@@ -51,7 +53,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://service-registry:8761/eureka/
+      defaultZone: http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka123}@service-registry:8761/eureka/
 
   instance:
     prefer-ip-address: true

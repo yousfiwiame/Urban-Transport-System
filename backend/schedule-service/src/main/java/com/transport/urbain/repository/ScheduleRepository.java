@@ -79,4 +79,13 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("startTime") LocalTime startTime,
             @Param("endTime") LocalTime endTime
     );
+
+    /**
+     * Counts active schedules.
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of active schedules
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.isActive = true")
+    long countByActiveTrue();
 }

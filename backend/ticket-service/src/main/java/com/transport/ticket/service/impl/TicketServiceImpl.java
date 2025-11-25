@@ -12,6 +12,7 @@ import com.transport.ticket.model.*;
 import com.transport.ticket.repository.TicketRepository;
 import com.transport.ticket.repository.TransactionRepository;
 import com.transport.ticket.service.TicketService;
+import com.transport.ticket.service.QRCodeService;
 import com.transport.ticket.util.QRCodeGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +42,8 @@ public class TicketServiceImpl implements TicketService {
     private final TicketMapper ticketMapper;
     private final TransactionMapper transactionMapper;
     private final QRCodeGenerator qrCodeGenerator;
+    private final QRCodeService qrCodeService;
+    private final com.transport.ticket.service.TicketPDFService ticketPDFService;
 
     @Override
     public PurchaseTicketResponse purchaseTicket(PurchaseTicketRequest request) {
@@ -58,9 +63,19 @@ public class TicketServiceImpl implements TicketService {
             log.info("✅ Ticket créé avec succès - ID: {}, Numéro: {}",
                     ticket.getIdTicket(), ticket.getTicketNumber());
 
-            // 2. Générer le QR code
-            String qrCode = qrCodeGenerator.generateQRCode(ticket.getTicketNumber());
-            ticket.setQrCode(qrCode);
+            // 2. Générer le QR code avec une vraie image
+            String qrData = qrCodeService.generateTicketData(
+                ticket.getIdTicket(),
+                ticket.getIdPassager(),
+                "Route-" + ticket.getIdTrajet(),
+                ticket.getDateAchat().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            );
+            byte[] qrCodeBytes = qrCodeService.generateQRCode(qrData);
+            
+            // Convertir en Data URL pour le frontend
+            String qrCodeDataUrl = "data:image/png;base64," + 
+                java.util.Base64.getEncoder().encodeToString(qrCodeBytes);
+            ticket.setQrCode(qrCodeDataUrl);
             ticket = ticketRepository.save(ticket);
             log.info("🔲 QR code généré pour le ticket: {}", ticket.getTicketNumber());
 
@@ -211,5 +226,188 @@ public class TicketServiceImpl implements TicketService {
         log.info("✅ Le passager ID: {} a {} ticket(s) actif(s)", passagerId, count);
 
         return count;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TicketResponse> getAllTickets(Pageable pageable) {
+        log.info("📋 Récupération de tous les tickets (admin) - page: {}, size: {}", 
+                pageable.getPageNumber(), pageable.getPageSize());
+
+        Page<Ticket> ticketsPage = ticketRepository.findAll(pageable);
+
+        log.info("✅ {} ticket(s) récupéré(s) sur {} au total", 
+                ticketsPage.getNumberOfElements(), ticketsPage.getTotalElements());
+
+        return ticketsPage.map(ticketMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getTicketStatistics() {
+        log.info("📊 Calcul des statistiques des tickets");
+
+        Map<String, Object> stats = new HashMap<>();
+
+        // Total des tickets
+        long totalTickets = ticketRepository.count();
+        stats.put("totalTickets", totalTickets);
+
+        // Tickets par statut
+        long activeTickets = ticketRepository.countByStatut(TicketStatus.ACTIVE);
+        long usedTickets = ticketRepository.countByStatut(TicketStatus.USED);
+        long expiredTickets = ticketRepository.countByStatut(TicketStatus.EXPIRED);
+        long cancelledTickets = ticketRepository.countByStatut(TicketStatus.CANCELLED);
+
+        stats.put("activeTickets", activeTickets);
+        stats.put("usedTickets", usedTickets);
+        stats.put("expiredTickets", expiredTickets);
+        stats.put("cancelledTickets", cancelledTickets);
+
+        // Revenus totaux
+        Double totalRevenue = ticketRepository.sumTotalRevenue();
+        stats.put("totalRevenue", totalRevenue != null ? totalRevenue : 0.0);
+
+        // Revenus par statut
+        Double activeRevenue = ticketRepository.sumRevenueByStatus(TicketStatus.ACTIVE);
+        stats.put("activeRevenue", activeRevenue != null ? activeRevenue : 0.0);
+
+        Double usedRevenue = ticketRepository.sumRevenueByStatus(TicketStatus.USED);
+        stats.put("usedRevenue", usedRevenue != null ? usedRevenue : 0.0);
+
+        log.info("✅ Statistiques calculées: {} tickets au total, {} MAD de revenus", 
+                totalTickets, stats.get("totalRevenue"));
+
+        return stats;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] generateTicketPDF(Long ticketId) throws Exception {
+        log.info("📄 Génération du PDF pour le ticket ID: {}", ticketId);
+
+        // Récupérer le ticket
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket introuvable avec l'ID: " + ticketId));
+
+        // TODO: Récupérer les informations de l'utilisateur via Feign Client
+        // Pour l'instant, on utilise un nom générique
+        String userName = "Passager " + ticket.getIdPassager();
+
+        // TODO: Récupérer les informations de la route via Feign Client
+        // Pour l'instant, on utilise un format générique
+        String routeInfo = "Route " + ticket.getIdTrajet() + " - Destination";
+
+        // Générer le PDF
+        byte[] pdfBytes = ticketPDFService.generateTicketPDF(ticket, userName, routeInfo);
+
+        log.info("✅ PDF généré avec succès pour le ticket ID: {} ({} bytes)", 
+                ticketId, pdfBytes.length);
+
+        return pdfBytes;
+    }
+
+    @Override
+    public TicketResponse createTicketByAdmin(com.transport.ticket.dto.request.CreateTicketRequest request) {
+        log.info("🎫 [ADMIN] Création d'un ticket pour le passager ID: {}", request.getIdPassager());
+
+        try {
+            // Créer le ticket avec les valeurs fournies ou par défaut
+            Ticket ticket = Ticket.builder()
+                    .idPassager(request.getIdPassager())
+                    .idTrajet(request.getIdTrajet())
+                    .prix(request.getPrix())
+                    .statut(request.getStatut() != null ? request.getStatut() : TicketStatus.ACTIVE)
+                    .build();
+
+            // Si dateAchat est fournie, l'utiliser, sinon @PrePersist le gérera
+            if (request.getDateAchat() != null) {
+                ticket.setDateAchat(request.getDateAchat());
+            }
+
+            // Sauvegarder pour générer le ticketNumber
+            ticket = ticketRepository.save(ticket);
+            log.info("✅ [ADMIN] Ticket créé - ID: {}, Numéro: {}", 
+                    ticket.getIdTicket(), ticket.getTicketNumber());
+
+            // Générer le QR code avec une vraie image
+            String qrData = qrCodeService.generateTicketData(
+                ticket.getIdTicket(),
+                ticket.getIdPassager(),
+                "Route-" + ticket.getIdTrajet(),
+                ticket.getDateAchat().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            );
+            byte[] qrCodeBytes = qrCodeService.generateQRCode(qrData);
+            
+            // Convertir en Data URL pour le frontend
+            String qrCodeDataUrl = "data:image/png;base64," + 
+                java.util.Base64.getEncoder().encodeToString(qrCodeBytes);
+            ticket.setQrCode(qrCodeDataUrl);
+            
+            // Si dateValidite est fournie, l'utiliser
+            if (request.getDateValidite() != null) {
+                ticket.setValidUntil(request.getDateValidite());
+            }
+            
+            ticket = ticketRepository.save(ticket);
+            log.info("🔲 [ADMIN] QR code généré pour le ticket: {}", ticket.getTicketNumber());
+
+            // Créer la transaction associée
+            Transaction transaction = Transaction.builder()
+                    .ticketId(ticket.getIdTicket())
+                    .montant(request.getPrix())
+                    .statut(PaymentStatus.COMPLETED)
+                    .methodePaiement(PaymentMethod.valueOf(request.getMethodePaiement()))
+                    .description("Ticket créé par l'administrateur - " + ticket.getTicketNumber())
+                    .build();
+
+            transactionRepository.save(transaction);
+            log.info("💳 [ADMIN] Transaction créée pour le ticket: {}", ticket.getTicketNumber());
+
+            return ticketMapper.toResponse(ticket);
+
+        } catch (Exception e) {
+            log.error("❌ [ADMIN] Erreur lors de la création du ticket: {}", e.getMessage());
+            throw new InvalidTicketException("Erreur lors de la création du ticket: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public TicketResponse updateTicketByAdmin(Long ticketId, com.transport.ticket.dto.request.UpdateTicketRequest request) {
+        log.info("✏️ [ADMIN] Modification du ticket ID: {}", ticketId);
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket introuvable avec l'ID: " + ticketId));
+
+        // Mettre à jour uniquement les champs fournis
+        if (request.getIdPassager() != null) {
+            ticket.setIdPassager(request.getIdPassager());
+            log.info("📝 [ADMIN] ID Passager mis à jour: {}", request.getIdPassager());
+        }
+
+        if (request.getIdTrajet() != null) {
+            ticket.setIdTrajet(request.getIdTrajet());
+            log.info("📝 [ADMIN] ID Trajet mis à jour: {}", request.getIdTrajet());
+        }
+
+        if (request.getPrix() != null) {
+            ticket.setPrix(request.getPrix());
+            log.info("📝 [ADMIN] Prix mis à jour: {}", request.getPrix());
+        }
+
+        if (request.getStatut() != null) {
+            ticket.setStatut(request.getStatut());
+            log.info("📝 [ADMIN] Statut mis à jour: {}", request.getStatut());
+        }
+
+        if (request.getDateValidite() != null) {
+            ticket.setValidUntil(request.getDateValidite());
+            log.info("📝 [ADMIN] Date de validité mise à jour: {}", request.getDateValidite());
+        }
+
+        ticket = ticketRepository.save(ticket);
+        log.info("✅ [ADMIN] Ticket ID: {} mis à jour avec succès", ticketId);
+
+        return ticketMapper.toResponse(ticket);
     }
 }

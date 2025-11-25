@@ -40,4 +40,13 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
 
     @Query("SELECT r FROM Route r WHERE r.isCircular = true AND r.isActive = true")
     List<Route> findAllCircularRoutes();
+
+    /**
+     * Counts active routes.
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of active routes
+     */
+    @Query("SELECT COUNT(r) FROM Route r WHERE r.isActive = true")
+    long countByActiveTrue();
 }

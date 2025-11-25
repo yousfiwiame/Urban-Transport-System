@@ -1,9 +1,13 @@
 spring:
   application:
     name: subscription-service
-
-  profiles:
-    active: docker
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    compatibility-verifier:
+      enabled: false
 
   datasource:
     url: jdbc:postgresql://subscription-db:5432/subscription_db
@@ -55,7 +59,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://service-registry:8761/eureka/
+      defaultZone: http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka123}@service-registry:8761/eureka/
 
   instance:
     prefer-ip-address: true

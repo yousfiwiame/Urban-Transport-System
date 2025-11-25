@@ -143,4 +143,26 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             @Param("ticketNumber") String ticketNumber,
             @Param("now") LocalDateTime now
     );
+
+    // ==================== STATISTIQUES ADMIN ====================
+
+    /**
+     * Compter les tickets par statut spécifique
+     * Utilisé pour : Statistiques du dashboard admin
+     */
+    long countByStatut(TicketStatus statut);
+
+    /**
+     * Calculer le revenu total de tous les tickets
+     * Utilisé pour : Dashboard financier
+     */
+    @Query("SELECT COALESCE(SUM(t.prix), 0.0) FROM Ticket t WHERE t.statut != 'CANCELLED'")
+    Double sumTotalRevenue();
+
+    /**
+     * Calculer le revenu par statut de ticket
+     * Utilisé pour : Statistiques financières détaillées
+     */
+    @Query("SELECT COALESCE(SUM(t.prix), 0.0) FROM Ticket t WHERE t.statut = :statut")
+    Double sumRevenueByStatus(@Param("statut") TicketStatus statut);
 }

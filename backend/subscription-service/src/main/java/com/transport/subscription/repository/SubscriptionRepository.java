@@ -79,5 +79,14 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     );
 
     List<Subscription> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    /**
+     * Counts active subscriptions.
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of active subscriptions
+     */
+    @Query("SELECT COUNT(s) FROM Subscription s WHERE s.status = 'ACTIVE' AND s.deletedAt IS NULL")
+    long countByActiveTrue();
 }
 

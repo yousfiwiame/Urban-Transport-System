@@ -169,11 +169,26 @@ services:
     networks:
       - transport-network
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 15
+      start_period: 90s
+    restart: unless-stopped
+
+  zipkin:
+    image: openzipkin/zipkin:2.24
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - transport-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9411/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 30s
     restart: unless-stopped
 
   # ========================================
@@ -189,6 +204,7 @@ services:
       - "8761:8761"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      MANAGEMENT_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     networks:
       - transport-network
     healthcheck:
@@ -207,11 +223,16 @@ services:
     ports:
       - "8888:8888"
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: native,docker
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka/
+      MANAGEMENT_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       service-registry:
         condition: service_healthy
+      zipkin:
+        condition: service_healthy
+    volumes:
+      - ./config-repo:/config-repo:ro
     networks:
       - transport-network
     healthcheck:
@@ -229,11 +250,28 @@ services:
     container_name: user-service
     ports:
       - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MANAGEMENT_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
-      - user-db
-      - service-registry
+      user-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      zipkin:
+        condition: service_healthy
     networks:
       - transport-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   ticket-service:
@@ -243,12 +281,28 @@ services:
     container_name: ticket-service
     ports:
       - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MANAGEMENT_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
-      - ticket-db
-      - kafka
-      - service-registry
+      ticket-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      zipkin:
+        condition: service_healthy
     networks:
       - transport-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   schedule-service:
@@ -258,12 +312,28 @@ services:
     container_name: schedule-service
     ports:
       - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MANAGEMENT_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
-      - schedule-db
-      - kafka
-      - service-registry
+      schedule-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      zipkin:
+        condition: service_healthy
     networks:
       - transport-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   geolocation-service:
@@ -273,12 +343,28 @@ services:
     container_name: geolocation-service
     ports:
       - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MANAGEMENT_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
-      - geolocation-db
-      - kafka
-      - service-registry
+      geolocation-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      zipkin:
+        condition: service_healthy
     networks:
       - transport-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   subscription-service:
@@ -288,12 +374,28 @@ services:
     container_name: subscription-service
     ports:
       - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MANAGEMENT_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
-      - subscription-db
-      - kafka
-      - service-registry
+      subscription-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      zipkin:
+        condition: service_healthy
     networks:
       - transport-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   api-gateway:
@@ -303,15 +405,54 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MANAGEMENT_TRACING_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
-      - user-service
-      - ticket-service
-      - schedule-service
-      - geolocation-service
-      - subscription-service
-      - service-registry
+      user-service:
+        condition: service_healthy
+      ticket-service:
+        condition: service_healthy
+      schedule-service:
+        condition: service_healthy
+      geolocation-service:
+        condition: service_healthy
+      subscription-service:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      zipkin:
+        condition: service_healthy
     networks:
       - transport-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - transport-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
 
 # ========================================

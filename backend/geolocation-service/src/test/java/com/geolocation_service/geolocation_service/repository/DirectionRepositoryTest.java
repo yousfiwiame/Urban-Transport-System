@@ -5,15 +5,24 @@ import com.geolocation_service.geolocation_service.model.LigneBus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration;
+import org.springframework.cloud.openfeign.FeignAutoConfiguration;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataMongoTest
-@TestPropertySource(locations = "classpath:application-test.properties")
+@DataMongoTest(excludeAutoConfiguration = {
+        EurekaClientAutoConfiguration.class,
+        KafkaAutoConfiguration.class,
+        RedisAutoConfiguration.class,
+        FeignAutoConfiguration.class
+})
+@ActiveProfiles("test")
 class DirectionRepositoryTest {
 
     @Autowired

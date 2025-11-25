@@ -1,5 +1,6 @@
 package com.transport.urbain.controller;
 
+import com.transport.urbain.dto.request.DriverRegisterRequest;
 import com.transport.urbain.dto.request.LoginRequest;
 import com.transport.urbain.dto.request.RefreshTokenRequest;
 import com.transport.urbain.dto.request.RegisterRequest;
@@ -54,9 +55,27 @@ public class AuthController {
      * @throws RuntimeException if the email already exists
      */
     @PostMapping("/register")
-    @Operation(summary = "Register a new user")
+    @Operation(summary = "Register a new user (passenger)")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    }
+
+    /**
+     * Registers a new driver in the system.
+     * 
+     * <p>Creates a new driver account with the provided registration information
+     * including driver-specific details (license number, expiration date, etc.)
+     * and returns authentication tokens. The new user will be assigned the DRIVER role.
+     * 
+     * @param request the driver registration request containing user and driver details
+     * @return an authentication response containing JWT tokens and user information
+     * @throws jakarta.validation.ConstraintViolationException if validation fails
+     * @throws RuntimeException if the email already exists
+     */
+    @PostMapping("/register/driver")
+    @Operation(summary = "Register a new driver")
+    public ResponseEntity<AuthResponse> registerDriver(@Valid @RequestBody DriverRegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.registerDriver(request));
     }
 
     /**

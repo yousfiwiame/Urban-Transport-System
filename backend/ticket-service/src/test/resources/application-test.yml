@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: ticket-service-test
+  
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+    defer-datasource-initialization: false
+
+  # Disable external services for tests
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.cloud.openfeign.FeignAutoConfiguration
+
+  # Disable Kafka
+  kafka:
+    bootstrap-servers: ""
+
+  # Disable Redis
+  data:
+    redis:
+      host: ""
+      port: 0
+
+  # Disable Spring Cloud compatibility verifier for tests
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+
+# Disable Eureka for tests
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+server:
+  port: 0  # Random port for tests
+
+logging:
+  level:
+    root: WARN
+    com.transport.ticket: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+

@@ -5,16 +5,25 @@ import com.geolocation_service.geolocation_service.model.PositionBus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration;
+import org.springframework.cloud.openfeign.FeignAutoConfiguration;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataMongoTest
-@TestPropertySource(locations = "classpath:application-test.properties")
+@DataMongoTest(excludeAutoConfiguration = {
+        EurekaClientAutoConfiguration.class,
+        KafkaAutoConfiguration.class,
+        RedisAutoConfiguration.class,
+        FeignAutoConfiguration.class
+})
+@ActiveProfiles("test")
 class PositionBusRepositoryTest {
 
     @Autowired
@@ -50,7 +59,8 @@ class PositionBusRepositoryTest {
         position1.setLongitude(-7.5898);
         position1.setVitesse(45.0);
         position1.setTimestamp(now.minusMinutes(10));
-        position1.setBus(testBus);
+        position1.setBusId(1L); // Utiliser le nouveau système avec Long busId
+        position1.setBus(testBus); // Garder pour compatibilité
         position1 = positionBusRepository.save(position1);
 
         position2 = new PositionBus();
@@ -58,23 +68,24 @@ class PositionBusRepositoryTest {
         position2.setLongitude(-7.6000);
         position2.setVitesse(50.0);
         position2.setTimestamp(now);
-        position2.setBus(testBus);
+        position2.setBusId(1L); // Utiliser le nouveau système avec Long busId
+        position2.setBus(testBus); // Garder pour compatibilité
         position2 = positionBusRepository.save(position2);
     }
 
     @Test
-    void testFindByBusIdBus() {
+    void testFindByBusId() {
         // When
-        List<PositionBus> positions = positionBusRepository.findByBusIdBus(testBus.getIdBus());
+        List<PositionBus> positions = positionBusRepository.findByBusId(1L);
 
         // Then
         assertThat(positions).hasSize(2);
     }
 
     @Test
-    void testFindByBusIdBusOrderByTimestampDesc() {
+    void testFindByBusIdOrderByTimestampDesc() {
         // When
-        List<PositionBus> positions = positionBusRepository.findByBusIdBusOrderByTimestampDesc(testBus.getIdBus());
+        List<PositionBus> positions = positionBusRepository.findByBusIdOrderByTimestampDesc(1L);
 
         // Then
         assertThat(positions).hasSize(2);
@@ -83,14 +94,14 @@ class PositionBusRepositoryTest {
     }
 
     @Test
-    void testFindByBusIdBusAndTimestampBetween() {
+    void testFindByBusIdAndTimestampBetween() {
         // Given
         LocalDateTime start = LocalDateTime.now().minusHours(1);
         LocalDateTime end = LocalDateTime.now().plusMinutes(10);
 
         // When
         List<PositionBus> positions = positionBusRepository
-                .findByBusIdBusAndTimestampBetweenOrderByTimestampAsc(testBus.getIdBus(), start, end);
+                .findByBusIdAndTimestampBetweenOrderByTimestampAsc(1L, start, end);
 
         // Then
         assertThat(positions).hasSize(2);

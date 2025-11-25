@@ -3,13 +3,20 @@ package com.geolocation_service.geolocation_service.controller;
 import com.geolocation_service.geolocation_service.dto.*;
 import com.geolocation_service.geolocation_service.model.PositionBus;
 import com.geolocation_service.geolocation_service.service.PositionBusService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/positions")
+@Slf4j
+@CrossOrigin(origins = "*")
 public class PositionBusController {
 
     private final PositionBusService positionBusService;
@@ -26,7 +33,7 @@ public class PositionBusController {
     }
 
     @GetMapping("/bus/{busId}")
-    public List<PositionBusDTO> getPositionsByBus(@PathVariable String busId) {
+    public List<PositionBusDTO> getPositionsByBus(@PathVariable Long busId) {
         return positionBusService.getPositionsByBusId(busId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -37,6 +44,44 @@ public class PositionBusController {
         return positionBusService.addPosition(positionBus);
     }
 
+    /**
+     * Endpoint simplifié pour l'application conducteur
+     * Crée une nouvelle position GPS avec seulement le busId et les coordonnées
+     * 
+     * @param request Données GPS depuis l'application conducteur
+     * @return Position créée
+     */
+    @PostMapping("/driver")
+    public ResponseEntity<PositionBus> createPositionFromDriver(@RequestBody CreatePositionRequest request) {
+        log.info("Receiving GPS position from driver for bus {}: ({}, {}), speed: {} km/h", 
+                request.getBusId(), request.getLatitude(), request.getLongitude(), request.getVitesse());
+        
+        try {
+            // Créer une nouvelle position avec le nouveau système (busId direct)
+            PositionBus position = new PositionBus();
+            position.setIdPosition(UUID.randomUUID().toString());
+            position.setBusId(request.getBusId());
+            position.setLatitude(request.getLatitude());
+            position.setLongitude(request.getLongitude());
+            position.setAltitude(request.getAltitude() != null ? request.getAltitude() : 0.0);
+            position.setPrecision(request.getPrecision() != null ? request.getPrecision() : 10.0);
+            position.setVitesse(request.getVitesse());
+            position.setDirection(request.getDirection());
+            position.setTimestamp(LocalDateTime.now());
+            
+            // Sauvegarder la position
+            PositionBus savedPosition = positionBusService.addPosition(position);
+            
+            log.info("Position saved successfully with ID: {}", savedPosition.getIdPosition());
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedPosition);
+            
+        } catch (Exception e) {
+            log.error("Error saving position for bus {}: {}", request.getBusId(), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @SuppressWarnings("deprecation")
     private PositionBusDTO convertToDTO(PositionBus position) {
         PositionBusDTO dto = new PositionBusDTO();
         dto.setIdPosition(position.getIdPosition());

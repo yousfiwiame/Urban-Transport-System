@@ -18,6 +18,37 @@ spring:
         format_sql: true
     defer-datasource-initialization: false
 
+  # Disable external services for tests
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.cloud.openfeign.FeignAutoConfiguration
+
+  # Disable Kafka
+  kafka:
+    bootstrap-servers: ""
+
+  # Disable Redis
+  data:
+    redis:
+      host: ""
+      port: 0
+
+# Disable Eureka for tests
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+# Disable scheduler for tests
+scheduler:
+  renewal:
+    enabled: false
+
 server:
   port: 0  # Random port for tests
 

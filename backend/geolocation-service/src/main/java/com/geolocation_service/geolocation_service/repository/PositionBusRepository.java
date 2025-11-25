@@ -10,12 +10,24 @@ import java.util.Optional;
 
 @Repository
 public interface PositionBusRepository extends MongoRepository<PositionBus, String> {
-    List<PositionBus> findByBusIdBus(String busId);
+    /**
+     * Trouver toutes les positions d'un bus par son ID (nouveau système)
+     */
+    List<PositionBus> findByBusId(Long busId);
 
-    // Trouver la dernière position d'un bus (CORRIGÉ)
-    List<PositionBus> findByBusIdBusOrderByTimestampDesc(String busId);
+    /**
+     * Trouver la dernière position d'un bus (nouveau système)
+     */
+    List<PositionBus> findByBusIdOrderByTimestampDesc(Long busId);
 
-    // Trouver les positions d'un bus dans un intervalle de temps (CORRIGÉ)
-    List<PositionBus> findByBusIdBusAndTimestampBetweenOrderByTimestampAsc(
-            String busId, LocalDateTime start, LocalDateTime end);
+    /**
+     * Trouver les positions d'un bus dans un intervalle de temps (nouveau système)
+     */
+    List<PositionBus> findByBusIdAndTimestampBetweenOrderByTimestampAsc(
+            Long busId, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Trouver la dernière position d'un bus (nouveau système) - première seulement
+     */
+    Optional<PositionBus> findFirstByBusIdOrderByTimestampDesc(Long busId);
 }

@@ -26,8 +26,15 @@ public class TrajetInfoService {
         Bus bus = busRepository.findById(busId)
                 .orElseThrow(() -> new RuntimeException("Bus non trouvé avec id: " + busId));
 
-        // Récupérer la dernière position (CORRIGÉ)
-        List<PositionBus> positions = positionBusRepository.findByBusIdBusOrderByTimestampDesc(busId);
+        // Récupérer la dernière position (nouveau système avec Long busId)
+        // Convertir String busId en Long pour le nouveau système
+        Long busIdLong;
+        try {
+            busIdLong = Long.parseLong(busId);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("ID de bus invalide: " + busId);
+        }
+        List<PositionBus> positions = positionBusRepository.findByBusIdOrderByTimestampDesc(busIdLong);
 
         if (positions.isEmpty()) {
             throw new RuntimeException("Aucune position trouvée pour le bus: " + busId);
@@ -72,10 +79,18 @@ public class TrajetInfoService {
     }
 
     private void calculerStatistiquesTrajet(TrajetInfoDTO dto, String busId, LocalDateTime now) {
-        // Récupérer les positions des 2 dernières heures (CORRIGÉ)
+        // Récupérer les positions des 2 dernières heures (nouveau système avec Long busId)
+        // Convertir String busId en Long pour le nouveau système
+        Long busIdLong;
+        try {
+            busIdLong = Long.parseLong(busId);
+        } catch (NumberFormatException e) {
+            // Si conversion échoue, utiliser 0L (ne trouvera rien mais ne plantera pas)
+            busIdLong = 0L;
+        }
         LocalDateTime debutPeriode = now.minusHours(2);
         List<PositionBus> positions = positionBusRepository
-                .findByBusIdBusAndTimestampBetweenOrderByTimestampAsc(busId, debutPeriode, now);
+                .findByBusIdAndTimestampBetweenOrderByTimestampAsc(busIdLong, debutPeriode, now);
 
         if (positions.isEmpty()) {
             dto.setHeureDepart(now);

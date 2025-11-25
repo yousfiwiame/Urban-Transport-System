@@ -11,9 +11,12 @@ import com.transport.urbain.event.UserUpdatedEvent;
 import com.transport.urbain.event.producer.UserEventProducer;
 import com.transport.urbain.exception.InvalidCredentialsException;
 import com.transport.urbain.exception.UserNotFoundException;
+import com.transport.urbain.model.Role;
+import com.transport.urbain.model.RoleName;
 import com.transport.urbain.model.User;
 import com.transport.urbain.model.UserProfile;
 import com.transport.urbain.model.UserStatus;
+import com.transport.urbain.repository.RoleRepository;
 import com.transport.urbain.repository.UserProfileRepository;
 import com.transport.urbain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +67,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final ProfileMapper profileMapper;
     private final PasswordEncoder passwordEncoder;
@@ -283,5 +287,52 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         log.info("Account unlocked for user: {}", user.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public UserResponse addRoleToUser(Long userId, RoleName roleName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+
+        if (user.getRoles().contains(role)) {
+            throw new RuntimeException("User already has this role");
+        }
+
+        user.getRoles().add(role);
+        userRepository.save(user);
+
+        log.info("Role {} added to user: {}", roleName, user.getEmail());
+
+        return userMapper.toUserResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse removeRoleFromUser(Long userId, RoleName roleName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+
+        if (!user.getRoles().contains(role)) {
+            throw new RuntimeException("User does not have this role");
+        }
+
+        // Prevent removing the last role
+        if (user.getRoles().size() <= 1) {
+            throw new RuntimeException("Cannot remove the last role. User must have at least one role.");
+        }
+
+        user.getRoles().remove(role);
+        userRepository.save(user);
+
+        log.info("Role {} removed from user: {}", roleName, user.getEmail());
+
+        return userMapper.toUserResponse(user);
     }
 }
