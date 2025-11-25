@@ -206,7 +206,7 @@ export default function BusTracking() {
 
       {/* Trip Info Panel */}
       {selectedBusId && (
-        <TrajetInfoPanel busId={selectedBusId} onClose={() => setSelectedBusId(null)} />
+        <TrajetInfoPanel busId={String(selectedBusId)} onClose={() => setSelectedBusId(null)} />
       )}
     </div>
   )

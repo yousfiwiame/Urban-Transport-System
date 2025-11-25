@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css'
 import { geolocationService, type EnrichedPositionResponse } from '@/services/geolocationService'
 import { RefreshCw, Bus as BusIcon, Navigation } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useAuthStore } from '@/store/authStore'
 
 // Custom bus icon (you can customize this)
 const myBusIcon = new Icon({
@@ -16,12 +15,9 @@ const myBusIcon = new Icon({
 })
 
 export default function DriverTrack() {
-  const { user } = useAuthStore()
   const [myPosition, setMyPosition] = useState<EnrichedPositionResponse | null>(null)
-  const [allPositions, setAllPositions] = useState<EnrichedPositionResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [selectedBusId, setSelectedBusId] = useState<number | null>(null)
 
   useEffect(() => {
     loadPositions()
@@ -32,7 +28,6 @@ export default function DriverTrack() {
   const loadPositions = async () => {
     try {
       const data = await geolocationService.getEnrichedPositions()
-      setAllPositions(data)
       
       // Find my bus position (you'll need to determine which bus belongs to the driver)
       // For now, we'll just show the most recent one
