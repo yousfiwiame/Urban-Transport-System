@@ -169,8 +169,8 @@ jobs:
 
       - name: 🏗️ Build and push images
         run: |
-          docker-compose build
-          docker-compose push || true
+          docker compose build
+          docker compose push || true
 
   # ============================================
   # DEPLOYMENT
