@@ -1,0 +1,27 @@
+# ConfigMap for shared configuration
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: urban-transport
+data:
+  # Eureka Service Registry
+  EUREKA_SERVER_URL: "http://service-registry:8761/eureka"
+  
+  # Redis Configuration
+  REDIS_HOST: "10.41.158.163"
+  REDIS_PORT: "6379"
+  
+  # MongoDB Configuration
+  MONGODB_URI: "mongodb+srv://youswiame_db_user:ysTTaXOn3zOexCL6@urbantransport.u5iumaq.mongodb.net/geolocationdb?appName=UrbanTransport"
+  
+  # Database Configuration
+  DB_HOST: "34.134.241.147"
+  DB_PORT: "5432"
+  
+  # Spring Profiles
+  SPRING_PROFILES_ACTIVE: "prod"
+  
+  # Logging
+  LOGGING_LEVEL_ROOT: "INFO"

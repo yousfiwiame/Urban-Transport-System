@@ -1,0 +1,18 @@
+# Kubernetes secrets (sensitive data)
+secrets.yaml
+
+# Backup files
+*.backup
+*.bak
+
+# Temporary files
+*.tmp
+*~
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

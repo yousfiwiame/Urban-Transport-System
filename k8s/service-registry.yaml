@@ -1,0 +1,67 @@
+---
+# Service Registry Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-registry
+  namespace: urban-transport
+  labels:
+    app: service-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-registry
+  template:
+    metadata:
+      labels:
+        app: service-registry
+    spec:
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: service-registry
+        image: ghcr.io/yousfiwiame/urban-transport-api-gateway:latest
+        ports:
+        - containerPort: 8761
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_PROFILES_ACTIVE
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8761
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8761
+          initialDelaySeconds: 30
+          periodSeconds: 5
+---
+# Service Registry Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-registry
+  namespace: urban-transport
+spec:
+  selector:
+    app: service-registry
+  ports:
+  - port: 8761
+    targetPort: 8761
+    name: http
+  type: ClusterIP
