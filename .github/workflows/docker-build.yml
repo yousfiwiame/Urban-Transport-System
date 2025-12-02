@@ -136,18 +136,33 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           docker compose up -d
-          sleep 30  # Wait for services to be ready
+          sleep 60  # Wait for services to be ready
 
       - name: Health check all services
         run: |
           echo "Checking service health..."
-          curl -f http://localhost:8080/actuator/health || exit 1
-          curl -f http://localhost:8081/actuator/health || exit 1
-          curl -f http://localhost:8082/actuator/health || exit 1
-          curl -f http://localhost:8083/actuator/health || exit 1
-          curl -f http://localhost:8084/actuator/health || exit 1
-          curl -f http://localhost:8085/actuator/health || exit 1
-          curl -f http://localhost:8086/actuator/health || exit 1
+          # Retry logic for each service
+          for i in {1..5}; do
+            curl -f http://localhost:8080/actuator/health && break || sleep 10
+          done
+          for i in {1..5}; do
+            curl -f http://localhost:8081/actuator/health && break || sleep 10
+          done
+          for i in {1..5}; do
+            curl -f http://localhost:8082/actuator/health && break || sleep 10
+          done
+          for i in {1..5}; do
+            curl -f http://localhost:8083/actuator/health && break || sleep 10
+          done
+          for i in {1..5}; do
+            curl -f http://localhost:8084/actuator/health && break || sleep 10
+          done
+          for i in {1..5}; do
+            curl -f http://localhost:8085/actuator/health && break || sleep 10
+          done
+          for i in {1..5}; do
+            curl -f http://localhost:8086/actuator/health && break || sleep 10
+          done
 
       - name: Stop services
         if: always()
