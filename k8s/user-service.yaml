@@ -33,8 +33,6 @@ spec:
             configMapKeyRef:
               name: app-config
               key: EUREKA_SERVER_URL
-        - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/userdb"
         - name: DB_HOST
           valueFrom:
             configMapKeyRef:
@@ -45,6 +43,8 @@ spec:
             configMapKeyRef:
               name: app-config
               key: DB_PORT
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://34.134.241.147:5432/userdb"
         - name: SPRING_DATASOURCE_PASSWORD
           valueFrom:
             secretKeyRef:

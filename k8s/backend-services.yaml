@@ -31,7 +31,7 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: "docker"
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/ticketdb"
+          value: "jdbc:postgresql://34.134.241.147:5432/ticketdb"
         - name: SPRING_DATASOURCE_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -88,7 +88,7 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: "docker"
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/scheduledb"
+          value: "jdbc:postgresql://34.134.241.147:5432/scheduledb"
         - name: SPRING_DATASOURCE_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -145,7 +145,7 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: "docker"
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/subscriptiondb"
+          value: "jdbc:postgresql://34.134.241.147:5432/subscriptiondb"
         - name: SPRING_DATASOURCE_PASSWORD
           valueFrom:
             secretKeyRef:
