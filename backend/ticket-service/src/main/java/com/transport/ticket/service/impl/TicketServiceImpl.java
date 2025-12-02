@@ -14,6 +14,9 @@ import com.transport.ticket.repository.TransactionRepository;
 import com.transport.ticket.service.TicketService;
 import com.transport.ticket.service.QRCodeService;
 import com.transport.ticket.util.QRCodeGenerator;
+import com.transport.urbain.event.TicketCancelledEvent;
+import com.transport.urbain.event.TicketPurchasedEvent;
+import com.transport.urbain.event.producer.TicketEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -44,6 +47,7 @@ public class TicketServiceImpl implements TicketService {
     private final QRCodeGenerator qrCodeGenerator;
     private final QRCodeService qrCodeService;
     private final com.transport.ticket.service.TicketPDFService ticketPDFService;
+    private final TicketEventProducer ticketEventProducer;
 
     @Override
     public PurchaseTicketResponse purchaseTicket(PurchaseTicketRequest request) {
@@ -104,6 +108,19 @@ public class TicketServiceImpl implements TicketService {
                     .success(true)
                     .message("Ticket acheté avec succès ! Valide jusqu'au " + ticket.getValidUntil())
                     .build();
+
+            // 6. Publish ticket purchased event to Kafka
+            ticketEventProducer.publishTicketPurchased(TicketPurchasedEvent.builder()
+                    .ticketId(ticket.getIdTicket())
+                    .userId(ticket.getIdPassager())
+                    .routeId(ticket.getIdTrajet())
+                    .price(ticket.getPrix())
+                    .ticketNumber(ticket.getTicketNumber())
+                    .qrCode(ticket.getQrCode())
+                    .validFrom(ticket.getValidFrom())
+                    .validUntil(ticket.getValidUntil())
+                    .purchasedAt(ticket.getDateAchat())
+                    .build());
 
             log.info("🎉 Achat de ticket terminé avec succès pour le passager ID: {}",
                     request.getIdPassager());
@@ -197,6 +214,17 @@ public class TicketServiceImpl implements TicketService {
         // Annuler le ticket
         ticket.setStatut(TicketStatus.CANCELLED);
         ticket = ticketRepository.save(ticket);
+
+        // Publish ticket cancelled event to Kafka
+        ticketEventProducer.publishTicketCancelled(TicketCancelledEvent.builder()
+                .ticketId(ticket.getIdTicket())
+                .userId(ticket.getIdPassager())
+                .routeId(ticket.getIdTrajet())
+                .refundAmount(ticket.getPrix())
+                .ticketNumber(ticket.getTicketNumber())
+                .cancelledAt(LocalDateTime.now())
+                .cancellationReason(reason)
+                .build());
 
         log.info("✅ Ticket {} annulé avec succès", ticket.getTicketNumber());
 

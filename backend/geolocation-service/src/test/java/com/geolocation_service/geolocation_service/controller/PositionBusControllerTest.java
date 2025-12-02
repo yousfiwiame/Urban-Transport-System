@@ -79,7 +79,7 @@ class PositionBusControllerTest {
         mockMvc.perform(post("/api/positions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testPosition)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.latitude").value(33.5731));
     }
 }

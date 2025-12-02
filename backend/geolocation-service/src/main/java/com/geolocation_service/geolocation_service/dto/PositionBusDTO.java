@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PositionBusDTO {
     private String idPosition;
+    private Long busId;
     private double latitude;
     private double longitude;
     private double altitude;

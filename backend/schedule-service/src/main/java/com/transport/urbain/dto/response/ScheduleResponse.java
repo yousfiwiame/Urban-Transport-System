@@ -1,5 +1,6 @@
 package com.transport.urbain.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.transport.urbain.model.DayOfWeek;
 import com.transport.urbain.model.ScheduleType;
 import lombok.AllArgsConstructor;
@@ -58,11 +59,13 @@ public class ScheduleResponse {
     /**
      * Scheduled departure time from origin stop
      */
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime departureTime;
 
     /**
      * Scheduled arrival time at destination stop
      */
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime arrivalTime;
 
     /**

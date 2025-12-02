@@ -87,3 +87,8 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     enabled: true
+
+# Stripe Payment Configuration
+stripe:
+  api:
+    key: ${STRIPE_API_KEY:sk_test_your_stripe_secret_key_here}

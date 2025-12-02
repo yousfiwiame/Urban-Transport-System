@@ -346,6 +346,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void saveRefreshToken(User user, String token, String deviceInfo, String ipAddress) {
+        // Delete existing refresh tokens for this user to avoid duplicate token constraint violations
+        // This allows users to have only one active refresh token at a time
+        refreshTokenRepository.deleteByUser(user);
+        
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(token)
                 .user(user)

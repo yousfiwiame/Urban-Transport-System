@@ -40,8 +40,21 @@ public class PositionBusController {
     }
 
     @PostMapping
-    public PositionBus addPosition(@RequestBody PositionBus positionBus) {
-        return positionBusService.addPosition(positionBus);
+    public ResponseEntity<PositionBus> addPosition(@RequestBody PositionBus positionBus) {
+        // Validate required fields - check for valid coordinate ranges
+        if (positionBus.getLatitude() < -90 || positionBus.getLatitude() > 90 ||
+            positionBus.getLongitude() < -180 || positionBus.getLongitude() > 180) {
+            log.error("Invalid position data: latitude or longitude out of range");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        try {
+            PositionBus saved = positionBusService.addPosition(positionBus);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        } catch (Exception e) {
+            log.error("Error saving position: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -85,6 +98,7 @@ public class PositionBusController {
     private PositionBusDTO convertToDTO(PositionBus position) {
         PositionBusDTO dto = new PositionBusDTO();
         dto.setIdPosition(position.getIdPosition());
+        dto.setBusId(position.getBusId());
         dto.setLatitude(position.getLatitude());
         dto.setLongitude(position.getLongitude());
         dto.setAltitude(position.getAltitude());

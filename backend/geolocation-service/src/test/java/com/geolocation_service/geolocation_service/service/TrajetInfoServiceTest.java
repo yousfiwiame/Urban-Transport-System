@@ -85,7 +85,8 @@ class TrajetInfoServiceTest {
     @Test
     void testGetTrajetInfo() {
         // Given
-        when(busRepository.findById("bus-1")).thenReturn(Optional.of(testBus));
+        // Le service appelle busRepository.findById(busId) avec busId = "1"
+        when(busRepository.findById("1")).thenReturn(Optional.of(testBus));
         // Le service convertit String en Long, donc on mock avec Long
         when(positionBusRepository.findByBusIdOrderByTimestampDesc(1L))
                 .thenReturn(testPositions);
@@ -121,7 +122,8 @@ class TrajetInfoServiceTest {
     @Test
     void testGetTrajetInfoNoPosition() {
         // Given
-        when(busRepository.findById("bus-1")).thenReturn(Optional.of(testBus));
+        // Le service appelle busRepository.findById(busId) avec busId = "1"
+        when(busRepository.findById("1")).thenReturn(Optional.of(testBus));
         // Le service convertit String en Long, donc on mock avec Long
         when(positionBusRepository.findByBusIdOrderByTimestampDesc(1L))
                 .thenReturn(new ArrayList<>());

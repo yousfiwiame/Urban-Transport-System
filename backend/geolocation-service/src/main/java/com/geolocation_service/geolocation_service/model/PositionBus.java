@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Document(collection = "position_bus")
 @JsonIgnoreProperties({"bus.positions", "bus.incidents", "bus.historiques"}) // éviter boucle infinie
 

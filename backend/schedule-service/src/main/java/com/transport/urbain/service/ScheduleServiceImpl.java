@@ -110,6 +110,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(value = "schedules", key = "#id")
     public ScheduleResponse getScheduleById(Long id) {
         Schedule schedule = scheduleRepository.findById(id)
@@ -118,11 +119,13 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ScheduleResponse> getAllSchedules(Pageable pageable) {
         return scheduleRepository.findAll(pageable).map(scheduleMapper::toScheduleResponse);
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(value = "routeSchedules", key = "#routeId")
     public List<ScheduleResponse> getSchedulesByRoute(Long routeId) {
         return scheduleRepository.findByRouteId(routeId, Pageable.unpaged())
@@ -133,6 +136,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Cacheable(value = "activeSchedules")
     public Page<ScheduleResponse> getActiveSchedules(Pageable pageable) {
         return scheduleRepository.findByIsActive(true, pageable).map(scheduleMapper::toScheduleResponse);

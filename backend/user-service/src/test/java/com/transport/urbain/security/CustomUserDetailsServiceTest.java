@@ -115,7 +115,7 @@ class CustomUserDetailsServiceTest {
                 .map(GrantedAuthority::getAuthority)
                 .collect(java.util.stream.Collectors.toSet());
         
-        assertThat(authorities).containsExactly("PASSENGER");
+        assertThat(authorities).containsExactly("ROLE_PASSENGER");
     }
 
     @Test
@@ -133,7 +133,7 @@ class CustomUserDetailsServiceTest {
                 .map(GrantedAuthority::getAuthority)
                 .collect(java.util.stream.Collectors.toSet());
         
-        assertThat(authorities).containsExactlyInAnyOrder("PASSENGER", "DRIVER");
+        assertThat(authorities).containsExactlyInAnyOrder("ROLE_PASSENGER", "ROLE_DRIVER");
     }
 
     @Test

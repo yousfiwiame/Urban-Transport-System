@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository interface for Schedule entity operations.
@@ -23,11 +24,16 @@ import java.util.List;
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
+    @Query("SELECT s FROM Schedule s LEFT JOIN FETCH s.route LEFT JOIN FETCH s.bus WHERE s.id = :id")
+    Optional<Schedule> findById(@Param("id") Long id);
+
+    @Query(value = "SELECT s FROM Schedule s WHERE s.isActive = :isActive",
+           countQuery = "SELECT COUNT(s) FROM Schedule s WHERE s.isActive = :isActive")
+    Page<Schedule> findByIsActive(@Param("isActive") Boolean isActive, Pageable pageable);
+
     Page<Schedule> findByRouteId(Long routeId, Pageable pageable);
 
     Page<Schedule> findByBusId(Long busId, Pageable pageable);
-
-    Page<Schedule> findByIsActive(Boolean isActive, Pageable pageable);
 
     @Query("SELECT s FROM Schedule s WHERE s.route.id = :routeId AND s.isActive = true " +
             "AND (s.validFrom IS NULL OR s.validFrom <= :date) " +

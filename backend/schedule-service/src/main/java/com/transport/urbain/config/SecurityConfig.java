@@ -3,6 +3,7 @@ package com.transport.urbain.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,11 +17,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * This configuration enables method-level security using @PreAuthorize annotations
  * to protect endpoints based on user roles. The actual authentication is delegated
  * to the API Gateway which validates JWT tokens.
+ * <p>
+ * This configuration is disabled when running with the "test" profile to allow
+ * integration tests to run without authentication requirements.
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
+@Profile("!test")
 public class SecurityConfig {
 
     private final GatewayAuthenticationFilter gatewayAuthenticationFilter;
