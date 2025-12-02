@@ -48,7 +48,16 @@ class TicketServiceTest {
     private TicketMapper ticketMapper;
 
     @Mock
-    private TransactionMapper transactionMapper;  // ← AJOUTER
+    private TransactionMapper transactionMapper;
+
+    @Mock
+    private com.transport.ticket.util.QRCodeGenerator qrCodeGenerator;
+
+    @Mock
+    private com.transport.ticket.service.TicketPDFService ticketPDFService;
+
+    @Mock
+    private com.transport.urbain.event.producer.TicketEventProducer ticketEventProducer;
 
     @InjectMocks
     private TicketServiceImpl ticketService;
