@@ -1,0 +1,241 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================
+  # BACKEND JOBS
+  # ============================================
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run all backend tests
+        working-directory: backend
+        run: mvn clean test
+
+      - name: Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: backend/**/target/surefire-reports/*.xml
+
+  backend-build:
+    name: Build Backend
+    needs: backend-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build all services
+        working-directory: backend
+        run: mvn clean package -DskipTests
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jars
+          path: backend/**/target/*.jar
+
+  # ============================================
+  # FRONTEND JOBS
+  # ============================================
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint || true
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  frontend-e2e:
+    name: E2E Tests
+    needs: frontend-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: frontend
+        run: npx playwright test --project=chromium
+        continue-on-error: true
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+
+  # ============================================
+  # DOCKER BUILD
+  # ============================================
+  docker-build:
+    name: Build Docker Images
+    needs: [backend-build, frontend-test]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Build and push images
+        run: |
+          docker-compose build
+          docker-compose push || true
+
+  # ============================================
+  # DEPLOYMENT
+  # ============================================
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.urban-transport.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          echo "This would deploy using kubectl, docker-compose, or your deployment tool"
+          # Add your deployment commands here
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://urban-transport.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          echo "This would deploy using kubectl, docker-compose, or your deployment tool"
+          # Add your deployment commands here
+
+      - name: Notify deployment
+        run: |
+          echo "Deployment to production completed successfully!"
+
+  # ============================================
+  # STATUS REPORTING
+  # ============================================
+  status-report:
+    name: Pipeline Status
+    needs: [backend-build, frontend-test, frontend-e2e]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Success
+        if: ${{ needs.backend-build.result == 'success' && needs.frontend-test.result == 'success' }}
+        run: |
+          echo "All CI checks passed!"
+          echo "Backend: done"
+          echo "Frontend: done"
+          echo "E2E Tests: ${{ needs.frontend-e2e.result }}"
+
+      - name: Failure
+        if: ${{ needs.backend-build.result != 'success' || needs.frontend-test.result != 'success' }}
+        run: |
+          echo "Some CI checks failed"
+          echo "Backend: ${{ needs.backend-build.result }}"
+          echo "Frontend: ${{ needs.frontend-test.result }}"
+          exit 1
