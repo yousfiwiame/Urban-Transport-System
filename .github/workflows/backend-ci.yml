@@ -16,6 +16,9 @@ jobs:
   test-microservices:
     name: Test ${{ matrix.service }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
 
     strategy:
       fail-fast: false

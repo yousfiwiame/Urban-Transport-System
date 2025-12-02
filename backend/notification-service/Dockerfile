@@ -1,76 +1,78 @@
-# Multi-stage build for notification-service
+# ============================================
+# Stage 1: Build
+# ============================================
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
-# Copy parent pom.xml first
+# Créer un settings.xml qui FORCE Maven Central et BLOQUE tout le reste
+RUN mkdir -p /root/.m2 && \
+    cat > /root/.m2/settings.xml <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>central-only</id>
+      <mirrorOf>*</mirrorOf>
+      <name>Maven Central Only</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </mirror>
+  </mirrors>
+</settings>
+EOF
+
+# Copier le pom.xml du service
 COPY pom.xml ./pom.xml
 
-# Create minimal pom.xml files for other modules to satisfy parent pom validation
-RUN mkdir -p service-registry config-server api-gateway user-service ticket-service geolocation-service schedule-service subscription-service && \
-    echo '<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.transport.urbain</groupId><artifactId>service-registry</artifactId><version>1.0.0</version><packaging>pom</packaging></project>' > service-registry/pom.xml && \
-    echo '<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.transport.urbain</groupId><artifactId>config-server</artifactId><version>1.0.0</version><packaging>pom</packaging></project>' > config-server/pom.xml && \
-    echo '<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.transport.urbain</groupId><artifactId>api-gateway</artifactId><version>1.0.0</version><packaging>pom</packaging></project>' > api-gateway/pom.xml && \
-    echo '<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.transport.urbain</groupId><artifactId>user-service</artifactId><version>1.0.0</version><packaging>pom</packaging></project>' > user-service/pom.xml && \
-    echo '<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.transport.urbain</groupId><artifactId>ticket-service</artifactId><version>1.0.0</version><packaging>pom</packaging></project>' > ticket-service/pom.xml && \
-    echo '<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.transport.urbain</groupId><artifactId>geolocation-service</artifactId><version>1.0.0</version><packaging>pom</packaging></project>' > geolocation-service/pom.xml && \
-    echo '<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.transport.urbain</groupId><artifactId>schedule-service</artifactId><version>1.0.0</version><packaging>pom</packaging></project>' > schedule-service/pom.xml && \
-    echo '<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.transport.urbain</groupId><artifactId>subscription-service</artifactId><version>1.0.0</version><packaging>pom</packaging></project>' > subscription-service/pom.xml
+# Télécharger les dépendances
+RUN mvn dependency:go-offline -B || true
 
-# Copy notification-service pom.xml and source
-COPY notification-service/pom.xml ./notification-service/pom.xml
-COPY notification-service/src ./notification-service/src
+# Copier le code source
+COPY src ./src
 
-# Download dependencies
-RUN mvn dependency:go-offline -B -f pom.xml -N || true
-RUN mvn dependency:go-offline -B -f notification-service/pom.xml
+# Compiler le service
+RUN mvn clean package -DskipTests -B
 
-# Build the application
-RUN set -e && mvn clean package -DskipTests -B -f notification-service/pom.xml
+# Vérifier que le JAR a été créé
+RUN test -f /app/target/*.jar || (echo "JAR file not found!" && exit 1)
 
-# Verify the JAR was created
-RUN JAR_FILE=$(find /app/notification-service/target -name "notification-service*.jar" -not -name "*-sources.jar" -not -name "*-javadoc.jar" -type f | head -n 1) && \
-    if [ -z "$JAR_FILE" ]; then \
-        echo "JAR file not found! Contents of target directory:"; \
-        ls -la /app/notification-service/target/ || echo "Target directory does not exist"; \
-        exit 1; \
-    else \
-        echo "Found JAR: $JAR_FILE"; \
-        if [ "$JAR_FILE" != "/app/notification-service/target/notification-service.jar" ]; then \
-            echo "Copying $JAR_FILE to notification-service.jar"; \
-            cp "$JAR_FILE" /app/notification-service/target/notification-service.jar; \
-        else \
-            echo "JAR already has the correct name: notification-service.jar"; \
-        fi; \
-    fi
-
-# Runtime stage
+# ============================================
+# Stage 2: Runtime
+# ============================================
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Install curl for health checks
-RUN apk add --no-cache curl tzdata && rm -rf /var/cache/apk/*
+RUN apk add --no-cache curl bash tzdata && rm -rf /var/cache/apk/*
 
-# Create non-root user
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Copy jar from build stage
-COPY --from=build --chown=spring:spring /app/notification-service/target/notification-service.jar app.jar
+# Copier le JAR depuis le build stage
+COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 
-# Switch to non-root user
 USER spring:spring
 
-# Expose port
 EXPOSE 8086
 
-# JVM optimizations
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
+HEALTHCHECK --interval=30s \
+            --timeout=5s \
+            --start-period=60s \
+            --retries=3 \
+            CMD curl -f http://localhost:8086/actuator/health || exit 1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=60s \
-    CMD curl -f http://localhost:8086/actuator/health || exit 1
+ENV JAVA_OPTS="-XX:+UseContainerSupport \
+               -XX:MaxRAMPercentage=75.0 \
+               -XX:+UseG1GC \
+               -XX:+UseStringDeduplication \
+               -XX:+AlwaysPreTouch \
+               -Djava.security.egd=file:/dev/./urandom"
 
-# Run the application
+ENV SPRING_OUTPUT_ANSI_ENABLED=always
+
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
-

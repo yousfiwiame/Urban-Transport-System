@@ -5,22 +5,20 @@ FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
-# Copier le pom parent et le pom du api-gateway
+# Copier le pom.xml du service
 COPY pom.xml ./pom.xml
-COPY api-gateway/pom.xml ./api-gateway/pom.xml
 
 # Télécharger les dépendances
-RUN mvn dependency:go-offline -B -f pom.xml || true
-RUN mvn dependency:go-offline -B -f api-gateway/pom.xml
+RUN mvn dependency:go-offline -B || true
 
 # Copier le code source
-COPY api-gateway/src ./api-gateway/src
+COPY src ./src
 
 # Compiler le service
-RUN mvn clean package -DskipTests -B -f api-gateway/pom.xml
+RUN mvn clean package -DskipTests -B
 
 # Vérifier que le JAR a été créé
-RUN test -f /app/api-gateway/target/api-gateway-*.jar || (echo "JAR file not found!" && exit 1)
+RUN test -f /app/target/*.jar || (echo "JAR file not found!" && exit 1)
 
 # ==========================
 # Stage 2: Runtime
@@ -40,7 +38,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN addgroup -S spring && adduser -S spring -G spring
 
 # Copier le JAR depuis le build stage
-COPY --from=build --chown=spring:spring /app/api-gateway/target/api-gateway-*.jar app.jar
+COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 
 # Utiliser l'utilisateur non-root
 USER spring:spring
