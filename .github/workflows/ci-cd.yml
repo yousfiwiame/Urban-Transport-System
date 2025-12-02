@@ -182,17 +182,38 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     environment:
       name: staging
-      url: https://staging.urban-transport.app
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to staging
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install gke-gcloud-auth-plugin
         run: |
-          echo "Deploying to staging environment..."
-          echo "This would deploy using kubectl, docker-compose, or your deployment tool"
-          # Add your deployment commands here
+          gcloud components install gke-gcloud-auth-plugin
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials urban-transport-cluster \
+            --region us-central1 \
+            --project urban-transport-system-480019
+
+      - name: Deploy to staging namespace
+        run: |
+          kubectl create namespace staging --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f k8s/ -n staging
+
+      - name: Get staging URLs
+        run: |
+          echo "Staging deployment completed"
+          kubectl get svc -n staging
 
   deploy-production:
     name: Deploy to Production
@@ -201,21 +222,61 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: https://urban-transport.app
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to production
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install gke-gcloud-auth-plugin
         run: |
-          echo "Deploying to production environment..."
-          echo "This would deploy using kubectl, docker-compose, or your deployment tool"
-          # Add your deployment commands here
+          gcloud components install gke-gcloud-auth-plugin
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials urban-transport-cluster \
+            --region us-central1 \
+            --project urban-transport-system-480019
+
+      - name: Deploy to GKE
+        working-directory: k8s
+        run: |
+          kubectl apply -f namespace.yaml
+          kubectl apply -f configmap.yaml
+          kubectl apply -f secrets.yaml
+          kubectl apply -f service-registry.yaml
+          kubectl apply -f backend-services.yaml
+          kubectl apply -f user-service.yaml
+          kubectl apply -f api-gateway.yaml
+          kubectl apply -f frontend.yaml
+
+      - name: Wait for deployments
+        run: |
+          kubectl rollout status deployment/service-registry -n urban-transport --timeout=5m
+          kubectl rollout status deployment/user-service -n urban-transport --timeout=5m
+          kubectl rollout status deployment/api-gateway -n urban-transport --timeout=5m
+          kubectl rollout status deployment/frontend -n urban-transport --timeout=5m
+
+      - name: Get LoadBalancer IPs
+        run: |
+          echo "Getting service URLs..."
+          kubectl get svc -n urban-transport
+          FRONTEND_IP=$(kubectl get svc frontend -n urban-transport -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          API_GATEWAY_IP=$(kubectl get svc api-gateway -n urban-transport -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "Frontend URL: http://$FRONTEND_IP"
+          echo "API Gateway URL: http://$API_GATEWAY_IP"
 
       - name: Notify deployment
         run: |
           echo "Deployment to production completed successfully!"
+          echo "Access your application via the LoadBalancer IPs shown above"
 
   # ============================================
   # STATUS REPORTING

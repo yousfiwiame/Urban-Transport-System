@@ -8,7 +8,7 @@ metadata:
   name: ticket-service
   namespace: urban-transport
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: ticket-service
@@ -28,6 +28,8 @@ spec:
         - configMapRef:
             name: app-config
         env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "docker"
         - name: SPRING_DATASOURCE_URL
           value: "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/ticketdb"
         - name: SPRING_DATASOURCE_PASSWORD
@@ -37,8 +39,11 @@ spec:
               key: DB_PASSWORD
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "384Mi"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -60,7 +65,7 @@ metadata:
   name: schedule-service
   namespace: urban-transport
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: schedule-service
@@ -80,6 +85,8 @@ spec:
         - configMapRef:
             name: app-config
         env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "docker"
         - name: SPRING_DATASOURCE_URL
           value: "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/scheduledb"
         - name: SPRING_DATASOURCE_PASSWORD
@@ -89,8 +96,11 @@ spec:
               key: DB_PASSWORD
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "384Mi"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -112,7 +122,7 @@ metadata:
   name: subscription-service
   namespace: urban-transport
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: subscription-service
@@ -132,6 +142,8 @@ spec:
         - configMapRef:
             name: app-config
         env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "docker"
         - name: SPRING_DATASOURCE_URL
           value: "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/subscriptiondb"
         - name: SPRING_DATASOURCE_PASSWORD
@@ -141,8 +153,11 @@ spec:
               key: DB_PASSWORD
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "384Mi"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -164,7 +179,7 @@ metadata:
   name: geolocation-service
   namespace: urban-transport
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: geolocation-service
@@ -184,6 +199,8 @@ spec:
         - configMapRef:
             name: app-config
         env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "docker"
         - name: SPRING_DATA_MONGODB_URI
           valueFrom:
             secretKeyRef:
@@ -191,8 +208,11 @@ spec:
               key: MONGODB_CONNECTION_STRING
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "384Mi"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -214,7 +234,7 @@ metadata:
   name: notification-service
   namespace: urban-transport
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: notification-service
@@ -233,10 +253,16 @@ spec:
         envFrom:
         - configMapRef:
             name: app-config
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "docker"
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "384Mi"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
 ---
 apiVersion: v1
 kind: Service

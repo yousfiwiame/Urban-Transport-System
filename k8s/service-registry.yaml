@@ -21,16 +21,13 @@ spec:
       - name: ghcr-secret
       containers:
       - name: service-registry
-        image: ghcr.io/yousfiwiame/urban-transport-api-gateway:latest
+        image: ghcr.io/yousfiwiame/urban-transport-service-registry:latest
         ports:
         - containerPort: 8761
           name: http
         env:
         - name: SPRING_PROFILES_ACTIVE
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: SPRING_PROFILES_ACTIVE
+          value: "docker"
         resources:
           requests:
             memory: "512Mi"
