@@ -24,20 +24,23 @@ RUN mkdir -p /root/.m2 && \
 </settings>
 EOF
 
-# Copier le pom.xml du service
+# Copier le parent POM
 COPY pom.xml ./pom.xml
 
+# Copier le pom.xml du service
+COPY user-service/pom.xml ./user-service/pom.xml
+
 # Télécharger les dépendances
-RUN mvn dependency:go-offline -B || true
+RUN mvn -f user-service/pom.xml dependency:go-offline -B || true
 
 # Copier le code source
-COPY src ./src
+COPY user-service/src ./user-service/src
 
 # Compiler le service
-RUN mvn clean package -DskipTests -B
+RUN mvn -f user-service/pom.xml clean package -DskipTests -B
 
 # Vérifier que le JAR a été créé
-RUN test -f /app/target/*.jar || (echo "JAR file not found!" && exit 1)
+RUN test -f /app/user-service/target/*.jar || (echo "JAR file not found!" && exit 1)
 
 # ============================================
 # Stage 2: Runtime
@@ -54,7 +57,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN addgroup -S spring && adduser -S spring -G spring
 
 # Copier le JAR depuis le build stage
-COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
+COPY --from=build --chown=spring:spring /app/user-service/target/*.jar app.jar
 
 USER spring:spring
 

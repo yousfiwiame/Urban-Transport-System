@@ -5,20 +5,23 @@ FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
-# Copier le pom.xml du service
+# Copier le parent POM
 COPY pom.xml ./pom.xml
 
+# Copier le pom.xml du service
+COPY api-gateway/pom.xml ./api-gateway/pom.xml
+
 # Télécharger les dépendances
-RUN mvn dependency:go-offline -B || true
+RUN mvn -f api-gateway/pom.xml dependency:go-offline -B || true
 
 # Copier le code source
-COPY src ./src
+COPY api-gateway/src ./api-gateway/src
 
 # Compiler le service
-RUN mvn clean package -DskipTests -B
+RUN mvn -f api-gateway/pom.xml clean package -DskipTests -B
 
 # Vérifier que le JAR a été créé
-RUN test -f /app/target/*.jar || (echo "JAR file not found!" && exit 1)
+RUN test -f /app/api-gateway/target/*.jar || (echo "JAR file not found!" && exit 1)
 
 # ==========================
 # Stage 2: Runtime
@@ -28,7 +31,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Installer curl et bash pour healthcheck/debug
-RUN apk add --no-cache curl bash tzdata && rm -rf /var/cache/apk/*
+RUN apk add --no-cache bash curl tzdata && rm -rf /var/cache/apk/*
 
 # Configurer timezone
 ENV TZ=UTC
@@ -38,7 +41,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN addgroup -S spring && adduser -S spring -G spring
 
 # Copier le JAR depuis le build stage
-COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
+COPY --from=build --chown=spring:spring /app/api-gateway/target/*.jar app.jar
 
 # Utiliser l'utilisateur non-root
 USER spring:spring
