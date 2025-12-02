@@ -63,10 +63,10 @@ class PositionBusControllerTest {
 
     @Test
     void testGetPositionsByBus() throws Exception {
-        when(positionBusService.getPositionsByBusId("bus-1"))
+        when(positionBusService.getPositionsByBusId(1L))
                 .thenReturn(Arrays.asList(testPosition));
 
-        mockMvc.perform(get("/api/positions/bus/bus-1"))
+        mockMvc.perform(get("/api/positions/bus/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].latitude").value(33.5731));
     }
@@ -79,7 +79,7 @@ class PositionBusControllerTest {
         mockMvc.perform(post("/api/positions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testPosition)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.latitude").value(33.5731));
     }
 }

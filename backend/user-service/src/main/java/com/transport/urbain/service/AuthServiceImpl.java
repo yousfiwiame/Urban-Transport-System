@@ -1,6 +1,7 @@
 package com.transport.urbain.service;
 
 import com.transport.urbain.dto.mapper.UserMapper;
+import com.transport.urbain.dto.request.DriverRegisterRequest;
 import com.transport.urbain.dto.request.LoginRequest;
 import com.transport.urbain.dto.request.RefreshTokenRequest;
 import com.transport.urbain.dto.request.RegisterRequest;
@@ -149,6 +150,88 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
+    public AuthResponse registerDriver(DriverRegisterRequest request) {
+        log.info("Registering new driver with email: {}", request.getEmail());
+
+        // Check if user already exists
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateUserException("Email already registered: " + request.getEmail());
+        }
+
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new DuplicateUserException("Phone number already registered: " + request.getPhoneNumber());
+        }
+
+        // Get driver role
+        Role driverRole = roleRepository.findByName(RoleName.DRIVER)
+                .orElseThrow(() -> new RuntimeException("Driver role not found"));
+
+        Set<Role> roles = new HashSet<>();
+        roles.add(driverRole);
+
+        // Create user with driver role
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .phoneNumber(request.getPhoneNumber())
+                .status(UserStatus.ACTIVE)
+                .roles(roles)
+                .emailVerified(false)
+                .phoneVerified(false)
+                .enabled(true)
+                .accountNonLocked(true)
+                .failedLoginAttempts(0)
+                .authProvider(AuthProvider.LOCAL)
+                .build();
+
+        // Create default profile with driver-specific information
+        UserProfile profile = UserProfile.builder()
+                .user(user)
+                .notificationsEnabled(true)
+                .emailNotificationsEnabled(true)
+                .smsNotificationsEnabled(true) // Enabled by default for drivers
+                .pushNotificationsEnabled(true)
+                .bio(String.format("Permis: %s | Expiration: %s%s",
+                        request.getLicenseNumber(),
+                        request.getLicenseExpirationDate(),
+                        request.getAdditionalInfo() != null ? " | " + request.getAdditionalInfo() : ""))
+                .build();
+
+        user.setProfile(profile);
+
+        user = userRepository.save(user);
+
+        // Publish user created event
+        userEventProducer.publishUserCreated(new UserCreatedEvent(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                LocalDateTime.now()
+        ));
+
+        // Generate tokens
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        // Save refresh token
+        saveRefreshToken(user, refreshToken, null, null);
+
+        log.info("Driver registered successfully: {}", user.getEmail());
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtService.getExpirationTime())
+                .user(userMapper.toUserResponse(user))
+                .build();
+    }
+
+    @Override
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         log.info("User login attempt: {}", request.getEmail());
 
@@ -263,6 +346,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void saveRefreshToken(User user, String token, String deviceInfo, String ipAddress) {
+        // Delete existing refresh tokens for this user to avoid duplicate token constraint violations
+        // This allows users to have only one active refresh token at a time
+        refreshTokenRepository.deleteByUser(user);
+        
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(token)
                 .user(user)

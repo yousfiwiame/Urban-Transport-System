@@ -1,13 +1,18 @@
 package com.transport.subscription.entity;
 
+import com.transport.subscription.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "subscription_plan", indexes = {
@@ -21,15 +26,24 @@ import java.util.List;
 public class SubscriptionPlan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "plan_id", updatable = false, nullable = false)
-    private Integer planId;
+    private UUID planId;
 
     @Column(name = "plan_code", nullable = false, unique = true, length = 64)
     private String planCode;
 
+    @Column(name = "plan_name", nullable = false, length = 255)
+    private String planName;
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "features", columnDefinition = "jsonb")
+    @Convert(converter = StringListConverter.class)
+    @Builder.Default
+    private List<String> features = new ArrayList<>();
 
     @Column(name = "duration_days", nullable = false)
     private Integer durationDays;

@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -13,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class RenewSubscriptionRequest {
 
     @NotNull(message = "Subscription ID is required")
-    private Integer subscriptionId;
+    private UUID subscriptionId;
 
     @Builder.Default
     private Boolean useStoredPaymentMethod = true;

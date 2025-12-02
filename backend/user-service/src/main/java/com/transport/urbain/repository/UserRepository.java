@@ -2,6 +2,7 @@ package com.transport.urbain.repository;
 
 import com.transport.urbain.model.User;
 import com.transport.urbain.model.UserStatus;
+import com.transport.urbain.model.RoleName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -118,4 +119,40 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<User> searchUsers(@Param("keyword") String keyword, Pageable pageable);
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Counts users by role.
+     * Used for admin dashboard statistics.
+     * 
+     * @param roleName the role to count
+     * @return the number of users with the specified role
+     */
+    @Query("SELECT COUNT(DISTINCT u) FROM User u JOIN u.roles r WHERE r.name = :roleName")
+    long countUsersByRole(@Param("roleName") RoleName roleName);
+
+    /**
+     * Counts active (enabled) users.
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of enabled users
+     */
+    long countByEnabledTrue();
+
+    /**
+     * Counts users with verified email.
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of users with verified email
+     */
+    long countByEmailVerifiedTrue();
+
+    /**
+     * Counts users with verified phone.
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of users with verified phone
+     */
+    long countByPhoneVerifiedTrue();
 }

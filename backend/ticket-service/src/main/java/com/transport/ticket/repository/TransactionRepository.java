@@ -28,7 +28,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByStatut(PaymentStatus statut);
 
-    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.statut = 'SUCCESS'")
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.statut = 'COMPLETED'")
     long countSuccessfulTransactions();
 
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.statut = 'FAILED'")
@@ -60,7 +60,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * ✅ CORRIGÉ : Calculer le revenu total des transactions réussies aujourd'hui
      * Utilisé pour : Dashboard financier
      */
-    @Query(value = "SELECT COALESCE(SUM(montant), 0) FROM transactions WHERE statut = 'SUCCESS' AND DATE(date_transaction) = CURRENT_DATE",
+    @Query(value = "SELECT COALESCE(SUM(montant), 0) FROM transactions WHERE statut = 'COMPLETED' AND DATE(date_transaction) = CURRENT_DATE",
             nativeQuery = true)
     BigDecimal calculateTodayRevenue();
 
@@ -68,7 +68,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * ✅ CORRIGÉ : Calculer le revenu entre deux dates
      * Utilisé pour : Rapports financiers
      */
-    @Query(value = "SELECT COALESCE(SUM(montant), 0) FROM transactions WHERE statut = 'SUCCESS' AND date_transaction BETWEEN :startDate AND :endDate",
+    @Query(value = "SELECT COALESCE(SUM(montant), 0) FROM transactions WHERE statut = 'COMPLETED' AND date_transaction BETWEEN :startDate AND :endDate",
             nativeQuery = true)
     BigDecimal calculateRevenueBetweenDates(
             @Param("startDate") LocalDateTime startDate,
@@ -78,7 +78,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     /**
      * Calculer le montant moyen des transactions
      */
-    @Query("SELECT AVG(t.montant) FROM Transaction t WHERE t.statut = 'SUCCESS'")
+    @Query("SELECT AVG(t.montant) FROM Transaction t WHERE t.statut = 'COMPLETED'")
     BigDecimal calculateAverageTransactionAmount();
 
     /**
@@ -90,6 +90,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     /**
      * Calculer le revenu total (toutes transactions réussies)
      */
-    @Query("SELECT COALESCE(SUM(t.montant), 0) FROM Transaction t WHERE t.statut = 'SUCCESS'")
+    @Query("SELECT COALESCE(SUM(t.montant), 0) FROM Transaction t WHERE t.statut = 'COMPLETED'")
     BigDecimal calculateTotalRevenue();
 }

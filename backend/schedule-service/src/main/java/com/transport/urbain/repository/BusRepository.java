@@ -50,4 +50,13 @@ public interface BusRepository extends JpaRepository<Bus, Long> {
 
     @Query("SELECT COUNT(b) FROM Bus b WHERE b.status = :status")
     Long countByStatus(@Param("status") BusStatus status);
+
+    /**
+     * Counts buses that are active (ACTIVE or IN_SERVICE status).
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of active buses
+     */
+    @Query("SELECT COUNT(b) FROM Bus b WHERE b.status = 'ACTIVE' OR b.status = 'IN_SERVICE'")
+    long countByActiveTrue();
 }

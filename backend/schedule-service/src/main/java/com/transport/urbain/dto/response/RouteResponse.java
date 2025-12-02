@@ -89,4 +89,24 @@ public class RouteResponse {
      * Timestamp when the route was last updated
      */
     private LocalDateTime updatedAt;
+
+    /**
+     * Current base price for this route in MAD
+     */
+    private BigDecimal basePrice;
+
+    /**
+     * Peak hour price (optional)
+     */
+    private BigDecimal peakHourPrice;
+
+    /**
+     * Weekend price (optional)
+     */
+    private BigDecimal weekendPrice;
+
+    /**
+     * Currency code (default: MAD)
+     */
+    private String currency;
 }

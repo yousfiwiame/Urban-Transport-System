@@ -9,19 +9,19 @@ import com.transport.subscription.dto.response.QRCodeResponse;
 import com.transport.subscription.dto.response.SubscriptionResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface SubscriptionService {
     SubscriptionResponse createSubscription(CreateSubscriptionRequest request);
-    SubscriptionResponse getSubscriptionById(Integer subscriptionId);
-    List<SubscriptionResponse> getSubscriptionsByUserId(Integer userId);
-    List<SubscriptionResponse> getActiveSubscriptionsByUserId(Integer userId);
+    SubscriptionResponse getSubscriptionById(UUID subscriptionId);
+    List<SubscriptionResponse> getSubscriptionsByUserId(UUID userId);
     SubscriptionResponse cancelSubscription(CancelSubscriptionRequest request);
     SubscriptionResponse renewSubscription(RenewSubscriptionRequest request);
-    SubscriptionResponse pauseSubscription(Integer subscriptionId);
-    SubscriptionResponse resumeSubscription(Integer subscriptionId);
-    QRCodeResponse generateQRCode(Integer subscriptionId);
+    SubscriptionResponse pauseSubscription(UUID subscriptionId);
+    SubscriptionResponse resumeSubscription(UUID subscriptionId);
+    QRCodeResponse generateQRCode(UUID subscriptionId);
     boolean validateQRCode(String qrCodeData);
-    SubscriptionResponse updateSubscription(Integer subscriptionId, UpdateSubscriptionRequest request);
-    SubscriptionResponse retryPayment(Integer subscriptionId, ProcessPaymentRequest paymentRequest);
+    SubscriptionResponse updateSubscription(UUID subscriptionId, UpdateSubscriptionRequest request);
+    SubscriptionResponse retryPayment(UUID subscriptionId, ProcessPaymentRequest paymentRequest);
 }
 

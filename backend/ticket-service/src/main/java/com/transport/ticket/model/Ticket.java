@@ -43,7 +43,8 @@ public class Ticket {
     @Column(name = "ticket_number", unique = true, length = 100)
     private String ticketNumber;
 
-    @Column(name = "qr_code", length = 1000)
+    @Lob
+    @Column(name = "qr_code", columnDefinition = "TEXT")
     private String qrCode;
 
     @Column(name = "valid_from")

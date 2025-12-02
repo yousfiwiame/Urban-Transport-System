@@ -10,9 +10,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -24,6 +26,7 @@ public class PlanController {
     private final PlanService planService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new subscription plan")
     public ResponseEntity<PlanResponse> createPlan(@Valid @RequestBody CreatePlanRequest request) {
         log.info("Creating plan with code: {}", request.getPlanCode());
@@ -47,7 +50,7 @@ public class PlanController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get plan by ID")
-    public ResponseEntity<PlanResponse> getPlanById(@PathVariable Integer id) {
+    public ResponseEntity<PlanResponse> getPlanById(@PathVariable UUID id) {
         PlanResponse response = planService.getPlanById(id);
         return ResponseEntity.ok(response);
     }
@@ -60,21 +63,23 @@ public class PlanController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update a subscription plan")
     public ResponseEntity<PlanResponse> updatePlan(
-            @PathVariable Integer id,
+            @PathVariable UUID id,
             @Valid @RequestBody CreatePlanRequest request) {
         PlanResponse response = planService.updatePlan(id, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete (deactivate) a subscription plan")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "204",
             description = "Plan successfully deactivated"
     )
-    public ResponseEntity<Void> deletePlan(@PathVariable Integer id) {
+    public ResponseEntity<Void> deletePlan(@PathVariable UUID id) {
         log.info("Deleting plan: {}", id);
         planService.deletePlan(id);
         return ResponseEntity

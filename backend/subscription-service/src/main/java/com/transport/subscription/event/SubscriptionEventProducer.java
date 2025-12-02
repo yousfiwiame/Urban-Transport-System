@@ -7,6 +7,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "spring.kafka.bootstrap-servers")
@@ -27,7 +29,7 @@ public class SubscriptionEventProducer {
     @Value("${kafka.topic.payment-processed:payment-processed}")
     private String paymentProcessedTopic;
 
-    public void publishSubscriptionCreatedEvent(Integer subscriptionId, Integer userId, Integer planId) {
+    public void publishSubscriptionCreatedEvent(UUID subscriptionId, UUID userId, UUID planId) {
         if (kafkaTemplate == null) {
             log.debug("Kafka not configured, skipping event publication");
             return;
@@ -46,7 +48,7 @@ public class SubscriptionEventProducer {
         }
     }
 
-    public void publishSubscriptionRenewedEvent(Integer subscriptionId, Integer userId) {
+    public void publishSubscriptionRenewedEvent(UUID subscriptionId, UUID userId) {
         if (kafkaTemplate == null) {
             log.debug("Kafka not configured, skipping event publication");
             return;
@@ -64,7 +66,7 @@ public class SubscriptionEventProducer {
         }
     }
 
-    public void publishSubscriptionCancelledEvent(Integer subscriptionId, Integer userId, String reason) {
+    public void publishSubscriptionCancelledEvent(UUID subscriptionId, UUID userId, String reason) {
         if (kafkaTemplate == null) {
             log.debug("Kafka not configured, skipping event publication");
             return;
@@ -83,7 +85,7 @@ public class SubscriptionEventProducer {
         }
     }
 
-    public void publishPaymentProcessedEvent(Integer paymentId, Integer subscriptionId, String status) {
+    public void publishPaymentProcessedEvent(UUID paymentId, UUID subscriptionId, String status) {
         if (kafkaTemplate == null) {
             log.debug("Kafka not configured, skipping event publication");
             return;

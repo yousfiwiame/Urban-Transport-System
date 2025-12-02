@@ -6,9 +6,9 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/subscription_service}
-    username: ${DATABASE_USERNAME:postgres}
-    password: ${DATABASE_PASSWORD:postgres}
+    url: jdbc:postgresql://localhost:5435/subscription_db
+    username: postgres
+    password: postgres
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -19,7 +19,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
@@ -27,6 +27,18 @@ spring:
         format_sql: true
         use_sql_comments: true
     open-in-view: false
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
 
 server:
   port: ${SERVER_PORT:8085}
@@ -36,6 +48,23 @@ server:
     include-message: always
     include-binding-errors: always
 
+# Eureka Configuration (ACTIVÉ)
+eureka:
+  client:
+    enabled: true
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# Logging Configuration
 logging:
   level:
     root: INFO
@@ -46,6 +75,7 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
+# Spring Doc OpenAPI Configuration
 springdoc:
   api-docs:
     path: /api-docs
@@ -53,24 +83,19 @@ springdoc:
     path: /swagger-ui.html
     enabled: true
 
+# Scheduler Configuration
 scheduler:
   renewal:
     enabled: ${SCHEDULER_RENEWAL_ENABLED:true}
     cron: ${SCHEDULER_RENEWAL_CRON:0 0 0 * * *}
-  expiration:
-    enabled: ${SCHEDULER_EXPIRATION_ENABLED:true}
-    cron: ${SCHEDULER_EXPIRATION_CRON:0 0 1 * * *}
-  cleanup:
-    enabled: ${SCHEDULER_CLEANUP_ENABLED:true}
-    cron: ${SCHEDULER_CLEANUP_CRON:0 0 2 * * *}
-    pending:
-      days: ${SCHEDULER_CLEANUP_PENDING_DAYS:7}
 
+# Payment Configuration
 payment:
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
 
+# Actuator Configuration
 management:
   endpoints:
     web:

@@ -58,9 +58,19 @@ public class GatewayConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
-                // User Service Routes
+                // Public Authentication Routes (no JWT filter)
+                .route("user-service-auth", r -> r
+                        .path("/api/auth/**")
+                        .filters(f -> f
+                                .circuitBreaker(config -> config
+                                        .setName("userServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/user-service"))
+                        )
+                        .uri("lb://user-service"))
+                
+                // Protected User Service Routes (with JWT filter)
                 .route("user-service", r -> r
-                        .path("/api/users/**", "/api/auth/**")
+                        .path("/api/users/**")
                         .filters(f -> f
                                 .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config()))
                                 .circuitBreaker(config -> config
@@ -71,7 +81,7 @@ public class GatewayConfig {
 
                 // Ticket Service Routes
                 .route("ticket-service", r -> r
-                        .path("/api/tickets/**")
+                        .path("/api/tickets/**", "/api/validations/**", "/api/transactions/**")
                         .filters(f -> f
                                 .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config()))
                                 .circuitBreaker(config -> config
@@ -82,7 +92,7 @@ public class GatewayConfig {
 
                 // Schedule Service Routes
                 .route("schedule-service", r -> r
-                        .path("/api/schedules/**", "/api/routes/**", "/api/stops/**")
+                        .path("/api/schedules/**", "/api/routes/**", "/api/stops/**", "/api/buses/**")
                         .filters(f -> f
                                 .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config()))
                                 .circuitBreaker(config -> config
@@ -93,7 +103,10 @@ public class GatewayConfig {
 
                 // Geolocation Service Routes
                 .route("geolocation-service", r -> r
-                        .path("/api/geolocation/**", "/api/tracking/**")
+                        .path("/api/geolocation/**", "/api/tracking/**", "/api/positions/**", 
+                              "/api/bus/**", "/api/lignes/**", "/api/directions/**", 
+                              "/api/trajet/**", "/api/incidents/**", "/api/historique/**", 
+                              "/api/zones/**")
                         .filters(f -> f
                                 .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config()))
                                 .circuitBreaker(config -> config
@@ -104,7 +117,7 @@ public class GatewayConfig {
 
                 // Subscription Service Routes
                 .route("subscription-service", r -> r
-                        .path("/api/subscriptions/**")
+                        .path("/api/subscriptions/**", "/api/plans/**", "/api/payments/**")
                         .filters(f -> f
                                 .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config()))
                                 .circuitBreaker(config -> config

@@ -1,5 +1,6 @@
 package com.transport.urbain.service;
 
+import com.transport.urbain.dto.request.DriverRegisterRequest;
 import com.transport.urbain.dto.request.LoginRequest;
 import com.transport.urbain.dto.request.RefreshTokenRequest;
 import com.transport.urbain.dto.request.RegisterRequest;
@@ -14,7 +15,8 @@ import com.transport.urbain.dto.response.JwtResponse;
  * 
  * <p>Authentication flow:
  * <ul>
- *   <li>Register: Creates new user account and returns JWT tokens</li>
+ *   <li>Register: Creates new user account (passenger) and returns JWT tokens</li>
+ *   <li>Register Driver: Creates new driver account and returns JWT tokens</li>
  *   <li>Login: Validates credentials and returns JWT tokens</li>
  *   <li>Refresh: Generates new access token using refresh token</li>
  *   <li>Logout: Revokes refresh token to invalidate session</li>
@@ -24,6 +26,8 @@ import com.transport.urbain.dto.response.JwtResponse;
 public interface AuthService {
 
     AuthResponse register(RegisterRequest request);
+
+    AuthResponse registerDriver(DriverRegisterRequest request);
 
     AuthResponse login(LoginRequest request);
 

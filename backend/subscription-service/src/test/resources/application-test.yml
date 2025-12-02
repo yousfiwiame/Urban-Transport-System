@@ -1,22 +1,63 @@
 spring:
   application:
     name: subscription-service-test
-  
+
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    compatibility-verifier:
+      enabled: false
+
   datasource:
-    url: jdbc:tc:postgresql:15:///subscription_service_test?TC_INITSCRIPT=file:src/test/resources/db/init-test.sql
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: jdbc:postgresql://localhost:5432/testdb
+    driver-class-name: org.postgresql.Driver
     username: test
     password: test
-  
+
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     defer-datasource-initialization: false
+
+  # Disable external services for tests
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.cloud.openfeign.FeignAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
+
+  # Disable Kafka
+  kafka:
+    bootstrap-servers: ""
+
+  # Disable Redis
+  data:
+    redis:
+      host: ""
+      port: 0
+
+# Disable Eureka for tests
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+# Disable scheduler for tests
+scheduler:
+  renewal:
+    enabled: false
 
 server:
   port: 0  # Random port for tests

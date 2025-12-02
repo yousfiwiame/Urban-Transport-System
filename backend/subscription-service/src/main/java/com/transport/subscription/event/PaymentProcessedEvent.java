@@ -6,14 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class PaymentProcessedEvent {
-    private Integer paymentId;
-    private Integer subscriptionId;
+    private UUID paymentId;
+    private UUID subscriptionId;
     private String status;
     private OffsetDateTime timestamp;
 }

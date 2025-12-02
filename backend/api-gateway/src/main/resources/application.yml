@@ -15,7 +15,11 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: "http://localhost:3000,http://localhost:3001"
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:3001"
+              - "http://127.0.0.1:3000"
+              - "http://127.0.0.1:3001"
             allowedMethods:
               - GET
               - POST
@@ -26,6 +30,7 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
             maxAge: 3600
+            exposedHeaders: "*"
 
 server:
   port: 8080

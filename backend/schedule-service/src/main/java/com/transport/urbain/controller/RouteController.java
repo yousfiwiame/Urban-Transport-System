@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.*;
 public class RouteController {
 
     private final RouteService routeService;
+    private final com.transport.urbain.service.RoutePricingService routePricingService;
 
     /**
      * Creates a new bus route.
@@ -260,5 +261,21 @@ public class RouteController {
     public ResponseEntity<Void> deactivateRoute(@PathVariable Long id) {
         routeService.deactivateRoute(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Get the price for a route.
+     * <p>
+     * Returns the calculated price for the specified route based on current pricing rules.
+     * This is a convenience endpoint that wraps the pricing calculation service.
+     *
+     * @param id the unique identifier of the route
+     * @return ResponseEntity containing the calculated price as BigDecimal
+     */
+    @GetMapping("/{id}/price")
+    @Operation(summary = "Get route price")
+    public ResponseEntity<java.math.BigDecimal> getRoutePrice(@PathVariable Long id) {
+        java.math.BigDecimal price = routePricingService.calculatePrice(id, java.time.LocalDateTime.now());
+        return ResponseEntity.ok(price);
     }
 }

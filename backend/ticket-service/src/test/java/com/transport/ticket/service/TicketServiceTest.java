@@ -10,8 +10,8 @@ import com.transport.ticket.exception.TicketNotFoundException;
 import com.transport.ticket.model.*;
 import com.transport.ticket.repository.TicketRepository;
 import com.transport.ticket.repository.TransactionRepository;
+import com.transport.ticket.service.QRCodeService;
 import com.transport.ticket.service.impl.TicketServiceImpl;
-import com.transport.ticket.util.QRCodeGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +42,7 @@ class TicketServiceTest {
     private TransactionRepository transactionRepository;
 
     @Mock
-    private QRCodeGenerator qrCodeGenerator;
+    private QRCodeService qrCodeService;
 
     @Mock
     private TicketMapper ticketMapper;
@@ -74,6 +75,7 @@ class TicketServiceTest {
                 .ticketNumber("TKT-12345")
                 .statut(TicketStatus.ACTIVE)
                 .prix(new BigDecimal("15.50"))
+                .dateAchat(LocalDateTime.now())
                 .build();
 
         transaction = Transaction.builder()
@@ -107,12 +109,14 @@ class TicketServiceTest {
 
     @Test
     @DisplayName("Devrait acheter un ticket avec succès")
-    void shouldPurchaseTicketSuccessfully() {
+    void shouldPurchaseTicketSuccessfully() throws Exception {
         when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
-        when(qrCodeGenerator.generateQRCode(anyString())).thenReturn("QR_CODE_BASE64");
+        when(qrCodeService.generateTicketData(anyLong(), anyLong(), anyString(), anyString()))
+            .thenReturn("TICKET:1|USER:1|ROUTE:Route-5|DATE:25/11/2024");
+        when(qrCodeService.generateQRCode(anyString())).thenReturn(new byte[]{1, 2, 3, 4});
         when(ticketMapper.toResponse(any(Ticket.class))).thenReturn(ticketResponse);
-        when(transactionMapper.toResponse(any(Transaction.class))).thenReturn(transactionResponse);  // ← AJOUTER
+        when(transactionMapper.toResponse(any(Transaction.class))).thenReturn(transactionResponse);
 
         PurchaseTicketResponse response = ticketService.purchaseTicket(purchaseRequest);
 
@@ -121,7 +125,8 @@ class TicketServiceTest {
 
         verify(ticketRepository, times(2)).save(any(Ticket.class));
         verify(transactionRepository, times(1)).save(any(Transaction.class));
-        verify(qrCodeGenerator, times(1)).generateQRCode(anyString());
+        verify(qrCodeService, times(1)).generateTicketData(anyLong(), anyLong(), anyString(), anyString());
+        verify(qrCodeService, times(1)).generateQRCode(anyString());
     }
 
     @Test

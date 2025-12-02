@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -15,13 +16,13 @@ import java.util.Map;
 @Builder
 public class SubscriptionHistoryResponse {
 
-    private Integer historyId;
-    private Integer subscriptionId;
+    private UUID historyId;
+    private UUID subscriptionId;
     private SubscriptionStatus oldStatus;
     private SubscriptionStatus newStatus;
     private String eventType;
     private OffsetDateTime eventDate;
-    private Integer performedBy;
+    private UUID performedBy;
     private String details;
     private Map<String, Object> metadata;
 }

@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID; // Keep for UUID.randomUUID() for idempotency keys
+import java.util.UUID;
 
 @Slf4j
 @Component

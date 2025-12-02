@@ -10,13 +10,14 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface SubscriptionRepository extends JpaRepository<Subscription, Integer> {
+public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
 
-    List<Subscription> findByUserId(Integer userId);
+    List<Subscription> findByUserId(UUID userId);
 
-    List<Subscription> findByUserIdAndStatus(Integer userId, SubscriptionStatus status);
+    List<Subscription> findByUserIdAndStatus(UUID userId, SubscriptionStatus status);
 
     @Query("SELECT s FROM Subscription s WHERE s.status = :status " +
            "AND s.autoRenewEnabled = true " +
@@ -36,28 +37,22 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Inte
            "AND s.status = :status " +
            "AND s.deletedAt IS NULL")
     boolean existsByUserIdAndPlanIdAndStatusAndDeletedAtIsNull(
-            @Param("userId") Integer userId,
-            @Param("planId") Integer planId,
+            @Param("userId") UUID userId,
+            @Param("planId") UUID planId,
             @Param("status") SubscriptionStatus status
     );
 
-    List<Subscription> findByPlan_PlanId(Integer planId);
+    List<Subscription> findByPlan_PlanId(UUID planId);
 
-    /**
-     * Trouve les abonnements actifs d'un utilisateur.
-     * Note: Cette méthode retourne les abonnements avec le statut ACTIVE.
-     * Le service doit valider que l'endDate n'est pas passée pour garantir
-     * qu'aucun abonnement expiré n'est retourné.
-     */
     @Query("SELECT s FROM Subscription s WHERE s.userId = :userId " +
            "AND s.status = :status " +
            "AND s.deletedAt IS NULL")
     List<Subscription> findActiveSubscriptionsByUserId(
-            @Param("userId") Integer userId,
+            @Param("userId") UUID userId,
             @Param("status") SubscriptionStatus status
     );
 
-    Optional<Subscription> findBySubscriptionIdAndDeletedAtIsNull(Integer subscriptionId);
+    Optional<Subscription> findBySubscriptionIdAndDeletedAtIsNull(UUID subscriptionId);
 
     @Query("SELECT s FROM Subscription s WHERE s.status = :status " +
            "AND s.autoRenewEnabled = :autoRenewEnabled " +
@@ -67,19 +62,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Inte
             @Param("autoRenewEnabled") Boolean autoRenewEnabled
     );
 
-    /**
-     * Trouve les abonnements qui doivent être expirés (ACTIVE ou PAUSED avec endDate passée)
-     */
-    @Query("SELECT s FROM Subscription s WHERE " +
-           "s.status IN ('ACTIVE', 'PAUSED') " +
-           "AND s.endDate IS NOT NULL " +
-           "AND s.endDate < :today " +
-           "AND s.deletedAt IS NULL")
-    List<Subscription> findSubscriptionsToExpire(@Param("today") LocalDate today);
-
-    /**
-     * Trouve les abonnements expirés avec un statut spécifique
-     */
     @Query("SELECT s FROM Subscription s WHERE s.status = :status " +
            "AND s.endDate < :today " +
            "AND s.deletedAt IS NULL")
@@ -96,18 +78,15 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Inte
             @Param("date") LocalDate date
     );
 
-    List<Subscription> findByUserIdOrderByCreatedAtDesc(Integer userId);
+    List<Subscription> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
     /**
-     * Trouve les abonnements PENDING créés avant une date donnée (abandonnés).
-     * Utilisé pour nettoyer les abonnements qui n'ont jamais été payés.
+     * Counts active subscriptions.
+     * Used for admin dashboard statistics.
+     * 
+     * @return the number of active subscriptions
      */
-    @Query("SELECT s FROM Subscription s WHERE s.status = :status " +
-           "AND s.createdAt < :thresholdDate " +
-           "AND s.deletedAt IS NULL")
-    List<Subscription> findAbandonedPendingSubscriptions(
-            @Param("status") SubscriptionStatus status,
-            @Param("thresholdDate") java.time.OffsetDateTime thresholdDate
-    );
+    @Query("SELECT COUNT(s) FROM Subscription s WHERE s.status = 'ACTIVE' AND s.deletedAt IS NULL")
+    long countByActiveTrue();
 }
 

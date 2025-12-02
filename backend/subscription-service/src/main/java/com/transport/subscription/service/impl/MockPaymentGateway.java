@@ -20,7 +20,7 @@ public class MockPaymentGateway implements PaymentGateway {
 
     @Override
     public PaymentResult processPayment(String cardToken, BigDecimal amount, String currency, String idempotencyKey) {
-        log.info("🎭 MOCK PAYMENT SUCCESS: {} {} (Card: {}, Idempotency: {})", 
+        log.info("MOCK PAYMENT SUCCESS: {} {} (Card: {}, Idempotency: {})", 
                  amount, currency, maskCardToken(cardToken), idempotencyKey);
         
         // Simule un paiement réussi
@@ -30,25 +30,25 @@ public class MockPaymentGateway implements PaymentGateway {
         result.setCardLast4("4242");
         result.setCardBrand("Visa");
         
-        log.info("✅ Mock payment transaction ID: {}", mockTransactionId);
+        log.info("Mock payment transaction ID: {}", mockTransactionId);
         return result;
     }
 
     @Override
     public PaymentResult refundPayment(String externalTxnId, BigDecimal amount) {
-        log.info("🎭 MOCK REFUND SUCCESS: {} for transaction {}", amount, externalTxnId);
+        log.info("MOCK REFUND SUCCESS: {} for transaction {}", amount, externalTxnId);
         
         // Simule un remboursement réussi
         String mockRefundId = "mock_refund_" + UUID.randomUUID().toString().substring(0, 8);
         
-        log.info("✅ Mock refund ID: {}", mockRefundId);
+        log.info("Mock refund ID: {}", mockRefundId);
         return new PaymentResult(true, mockRefundId, null);
     }
 
     @Override
     public boolean verifyWebhookSignature(String payload, String signature) {
         // En mode mock, on accepte toutes les signatures
-        log.debug("🎭 Mock webhook signature verification: {}", signature != null ? "ACCEPTED" : "REJECTED");
+        log.debug("Mock webhook signature verification: {}", signature != null ? "ACCEPTED" : "REJECTED");
         return signature != null && !signature.isEmpty();
     }
 

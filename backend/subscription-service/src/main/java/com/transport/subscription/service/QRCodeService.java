@@ -1,8 +1,10 @@
 package com.transport.subscription.service;
 
+import java.util.UUID;
+
 public interface QRCodeService {
-    String generateQRCode(Integer subscriptionId);
+    String generateQRCode(UUID subscriptionId);
     boolean validateQRCode(String qrCodeData);
-    String getQRCodeData(Integer subscriptionId);
+    String getQRCodeData(UUID subscriptionId);
 }
 

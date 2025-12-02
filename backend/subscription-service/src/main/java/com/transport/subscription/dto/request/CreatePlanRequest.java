@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -18,7 +19,13 @@ public class CreatePlanRequest {
     @Size(max = 64, message = "Plan code must not exceed 64 characters")
     private String planCode;
 
+    @NotBlank(message = "Plan name is required")
+    @Size(max = 255, message = "Plan name must not exceed 255 characters")
+    private String planName;
+
     private String description;
+
+    private List<String> features;
 
     @NotNull(message = "Duration days is required")
     @Min(value = 1, message = "Duration days must be greater than 0")

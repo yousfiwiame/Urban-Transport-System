@@ -1,6 +1,8 @@
 package com.transport.ticket.controller;
 
+import com.transport.ticket.dto.request.CreateTicketRequest;
 import com.transport.ticket.dto.request.PurchaseTicketRequest;
+import com.transport.ticket.dto.request.UpdateTicketRequest;
 import com.transport.ticket.dto.response.PurchaseTicketResponse;
 import com.transport.ticket.dto.response.TicketResponse;
 import com.transport.ticket.service.TicketService;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -238,6 +241,159 @@ public class TicketController {
         response.put("status", "UP");
         response.put("service", "Ticket Service");
         response.put("message", "Le service de tickets fonctionne correctement");
+
+        return ResponseEntity.ok(response);
+    }
+
+    // ==================== ENDPOINTS ADMIN ====================
+
+    /**
+     * 📋 Récupérer TOUS les tickets (ADMIN uniquement)
+     * GET /api/tickets?page=0&size=10&sortBy=dateAchat&sortDirection=desc
+     * 
+     * Paramètres:
+     * - page: numéro de la page (commence à 0)
+     * - size: nombre d'éléments par page
+     * - sortBy: critère de tri (ex: dateAchat)
+     * - sortDirection: direction du tri (asc ou desc)
+     */
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<TicketResponse>> getAllTickets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "dateAchat") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+
+        log.info("📥 [GET /api/tickets] (ADMIN) Requête reçue - page: {}, size: {}", page, size);
+
+        // Créer l'objet Pageable
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("asc")
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Page<TicketResponse> ticketsPage = ticketService.getAllTickets(pageable);
+
+        log.info("📤 [GET /api/tickets] (ADMIN) Page {}/{} - {} ticket(s)",
+                ticketsPage.getNumber() + 1,
+                ticketsPage.getTotalPages(),
+                ticketsPage.getNumberOfElements());
+
+        return ResponseEntity.ok(ticketsPage);
+    }
+
+    /**
+     * 📊 Récupérer les statistiques des tickets (ADMIN uniquement)
+     * GET /api/tickets/statistics
+     * 
+     * Retourne:
+     * - Nombre total de tickets
+     * - Nombre de tickets par statut (actifs, utilisés, expirés, annulés)
+     * - Revenus totaux
+     * - Revenus par statut
+     */
+    @GetMapping("/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getTicketStatistics() {
+
+        log.info("📥 [GET /api/tickets/statistics] (ADMIN) Requête reçue");
+
+        Map<String, Object> statistics = ticketService.getTicketStatistics();
+
+        log.info("📤 [GET /api/tickets/statistics] (ADMIN) Statistiques envoyées");
+
+        return ResponseEntity.ok(statistics);
+    }
+
+    /**
+     * 📄 Télécharger le billet en PDF
+     * GET /api/tickets/{id}/download
+     *
+     * Exemple: GET /api/tickets/1/download
+     * 
+     * Retourne un fichier PDF contenant:
+     * - Les informations du passager
+     * - Les détails du voyage
+     * - Le QR code de validation
+     */
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> downloadTicketPDF(@PathVariable Long id) {
+
+        log.info("📥 [GET /api/tickets/{}/download] Demande de téléchargement PDF", id);
+
+        try {
+            byte[] pdfBytes = ticketService.generateTicketPDF(id);
+
+            log.info("📤 [GET /api/tickets/{}/download] PDF généré avec succès ({} bytes)", 
+                    id, pdfBytes.length);
+
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/pdf")
+                    .header("Content-Disposition", "attachment; filename=ticket-" + id + ".pdf")
+                    .body(pdfBytes);
+
+        } catch (Exception e) {
+            log.error("❌ [GET /api/tickets/{}/download] Erreur lors de la génération du PDF: {}", 
+                    id, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 🎫 Créer un nouveau ticket (ADMIN uniquement)
+     * POST /api/tickets/admin
+     * 
+     * Body JSON exemple:
+     * {
+     *   "idPassager": 1,
+     *   "idTrajet": 5,
+     *   "prix": 15.50,
+     *   "methodePaiement": "CREDIT_CARD",
+     *   "statut": "ACTIVE",
+     *   "dateAchat": "2024-11-25T10:00:00",
+     *   "dateValidite": "2024-12-25T23:59:59"
+     * }
+     */
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TicketResponse> createTicketByAdmin(
+            @Valid @RequestBody CreateTicketRequest request) {
+
+        log.info("📥 [POST /api/tickets/admin] (ADMIN) Création de ticket pour le passager ID: {}",
+                request.getIdPassager());
+
+        TicketResponse response = ticketService.createTicketByAdmin(request);
+
+        log.info("📤 [POST /api/tickets/admin] (ADMIN) Ticket créé - ID: {}, Numéro: {}",
+                response.getIdTicket(), response.getTicketNumber());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * ✏️ Modifier un ticket existant (ADMIN uniquement)
+     * PUT /api/tickets/admin/{id}
+     * 
+     * Body JSON exemple:
+     * {
+     *   "idPassager": 2,
+     *   "prix": 20.00,
+     *   "statut": "CANCELLED",
+     *   "dateValidite": "2024-12-31T23:59:59"
+     * }
+     */
+    @PutMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TicketResponse> updateTicketByAdmin(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateTicketRequest request) {
+
+        log.info("📥 [PUT /api/tickets/admin/{}] (ADMIN) Modification du ticket", id);
+
+        TicketResponse response = ticketService.updateTicketByAdmin(id, request);
+
+        log.info("📤 [PUT /api/tickets/admin/{}] (ADMIN) Ticket modifié avec succès", id);
 
         return ResponseEntity.ok(response);
     }

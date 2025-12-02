@@ -4,6 +4,7 @@ import com.transport.urbain.dto.request.ChangePasswordRequest;
 import com.transport.urbain.dto.request.UpdateProfileRequest;
 import com.transport.urbain.dto.response.ProfileResponse;
 import com.transport.urbain.dto.response.UserResponse;
+import com.transport.urbain.model.RoleName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
  *   <li>Password management</li>
  *   <li>Account verification</li>
  *   <li>Account unlocking</li>
+ *   <li>Role management</li>
  * </ul>
  * 
  * <p>All operations are scoped to either individual users or administrators.
@@ -47,4 +49,8 @@ public interface UserService {
     void verifyPhone(Long userId, String code);
 
     void unlockAccount(Long userId);
+
+    UserResponse addRoleToUser(Long userId, RoleName roleName);
+
+    UserResponse removeRoleFromUser(Long userId, RoleName roleName);
 }

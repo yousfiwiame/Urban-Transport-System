@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -92,7 +93,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse refundPayment(Integer paymentId, String reason) {
+    public PaymentResponse refundPayment(UUID paymentId, String reason) {
         log.info("Processing refund for payment: {}", paymentId);
 
         SubscriptionPayment payment = paymentRepository.findById(paymentId)
@@ -135,7 +136,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PaymentResponse> getPaymentsBySubscriptionId(Integer subscriptionId) {
+    public List<PaymentResponse> getPaymentsBySubscriptionId(UUID subscriptionId) {
         List<SubscriptionPayment> payments = paymentRepository
                 .findBySubscription_SubscriptionId(subscriptionId);
         return paymentMapper.toResponseList(payments);
@@ -143,7 +144,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PaymentResponse getPaymentById(Integer paymentId) {
+    public PaymentResponse getPaymentById(UUID paymentId) {
         SubscriptionPayment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentFailedException("Payment not found: " + paymentId));
         return paymentMapper.toResponse(payment);

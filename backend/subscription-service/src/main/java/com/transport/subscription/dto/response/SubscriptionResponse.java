@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -16,10 +17,10 @@ import java.time.OffsetDateTime;
 @Builder
 public class SubscriptionResponse {
 
-    private Integer subscriptionId;
-    private Integer userId;
+    private UUID subscriptionId;
+    private UUID userId;
     private PlanResponse plan;
-    private Integer planId;
+    private UUID planId;
     private String planCode;
     private String currency;
     private SubscriptionStatus status;

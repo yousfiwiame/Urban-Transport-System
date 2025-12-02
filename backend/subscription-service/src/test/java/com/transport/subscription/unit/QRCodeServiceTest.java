@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("QR Code Service Unit Tests")
@@ -22,7 +24,7 @@ class QRCodeServiceTest {
     @DisplayName("Should generate QR code successfully")
     void testGenerateQRCode_Success() {
         // Given
-        Integer subscriptionId = 123;
+        UUID subscriptionId = UUID.randomUUID();
 
         // When
         String qrCode = qrCodeService.generateQRCode(subscriptionId);
@@ -39,7 +41,7 @@ class QRCodeServiceTest {
     @DisplayName("Should validate correct QR code")
     void testValidateQRCode_Valid() {
         // Given
-        Integer subscriptionId = 123;
+        UUID subscriptionId = UUID.randomUUID();
         String qrCode = qrCodeService.generateQRCode(subscriptionId);
 
         // When

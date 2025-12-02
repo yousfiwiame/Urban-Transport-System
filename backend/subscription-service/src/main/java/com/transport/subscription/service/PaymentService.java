@@ -4,11 +4,12 @@ import com.transport.subscription.dto.request.ProcessPaymentRequest;
 import com.transport.subscription.dto.response.PaymentResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface PaymentService {
     PaymentResponse processPayment(ProcessPaymentRequest request);
-    PaymentResponse refundPayment(Integer paymentId, String reason);
-    List<PaymentResponse> getPaymentsBySubscriptionId(Integer subscriptionId);
-    PaymentResponse getPaymentById(Integer paymentId);
+    PaymentResponse refundPayment(UUID paymentId, String reason);
+    List<PaymentResponse> getPaymentsBySubscriptionId(UUID subscriptionId);
+    PaymentResponse getPaymentById(UUID paymentId);
 }
 

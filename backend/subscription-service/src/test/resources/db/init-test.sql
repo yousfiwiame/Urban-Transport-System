@@ -15,10 +15,12 @@ END$$ LANGUAGE plpgsql;
 CREATE TABLE subscription_plan (
   plan_id        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   plan_code      varchar(64) NOT NULL UNIQUE,
+  plan_name      varchar(255) NOT NULL,
   description    text,
   duration_days  int NOT NULL CHECK (duration_days > 0),
   price          numeric(10,2) NOT NULL CHECK (price >= 0),
   currency       char(3) NOT NULL,
+  features       jsonb DEFAULT '[]'::jsonb,
   is_active      boolean NOT NULL DEFAULT true,
   created_at     timestamptz NOT NULL DEFAULT now(),
   updated_at     timestamptz NOT NULL DEFAULT now()

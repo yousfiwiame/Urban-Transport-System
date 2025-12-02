@@ -76,7 +76,8 @@ class TrajetInfoServiceTest {
             pos.setLongitude(-7.5898 + (i * 0.001));
             pos.setVitesse(40.0 + i);
             pos.setTimestamp(now.minusMinutes(5 * i));
-            pos.setBus(testBus);
+            pos.setBusId(1L); // Utiliser le nouveau système avec Long busId
+            pos.setBus(testBus); // Garder pour compatibilité
             testPositions.add(pos);
         }
     }
@@ -84,15 +85,17 @@ class TrajetInfoServiceTest {
     @Test
     void testGetTrajetInfo() {
         // Given
-        when(busRepository.findById("bus-1")).thenReturn(Optional.of(testBus));
-        when(positionBusRepository.findByBusIdBusOrderByTimestampDesc("bus-1"))
+        // Le service appelle busRepository.findById(busId) avec busId = "1"
+        when(busRepository.findById("1")).thenReturn(Optional.of(testBus));
+        // Le service convertit String en Long, donc on mock avec Long
+        when(positionBusRepository.findByBusIdOrderByTimestampDesc(1L))
                 .thenReturn(testPositions);
-        when(positionBusRepository.findByBusIdBusAndTimestampBetweenOrderByTimestampAsc(
-                anyString(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(positionBusRepository.findByBusIdAndTimestampBetweenOrderByTimestampAsc(
+                any(Long.class), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(testPositions);
 
         // When
-        TrajetInfoDTO result = trajetInfoService.getTrajetInfo("bus-1");
+        TrajetInfoDTO result = trajetInfoService.getTrajetInfo("1"); // Passer "1" qui sera converti en 1L
 
         // Then
         assertThat(result).isNotNull();
@@ -119,12 +122,14 @@ class TrajetInfoServiceTest {
     @Test
     void testGetTrajetInfoNoPosition() {
         // Given
-        when(busRepository.findById("bus-1")).thenReturn(Optional.of(testBus));
-        when(positionBusRepository.findByBusIdBusOrderByTimestampDesc("bus-1"))
+        // Le service appelle busRepository.findById(busId) avec busId = "1"
+        when(busRepository.findById("1")).thenReturn(Optional.of(testBus));
+        // Le service convertit String en Long, donc on mock avec Long
+        when(positionBusRepository.findByBusIdOrderByTimestampDesc(1L))
                 .thenReturn(new ArrayList<>());
 
         // When & Then
-        assertThatThrownBy(() -> trajetInfoService.getTrajetInfo("bus-1"))
+        assertThatThrownBy(() -> trajetInfoService.getTrajetInfo("1")) // Passer "1" qui sera converti en 1L
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Aucune position trouvée");
     }

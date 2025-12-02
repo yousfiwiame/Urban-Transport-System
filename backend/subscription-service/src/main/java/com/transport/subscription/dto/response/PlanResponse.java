@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -14,9 +16,11 @@ import java.time.OffsetDateTime;
 @Builder
 public class PlanResponse {
 
-    private Integer planId;
+    private UUID planId;
     private String planCode;
+    private String planName;
     private String description;
+    private List<String> features;
     private Integer durationDays;
     private BigDecimal price;
     private String currency;
