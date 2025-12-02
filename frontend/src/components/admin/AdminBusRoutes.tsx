@@ -16,6 +16,15 @@ export default function AdminBusRoutes() {
   const [page, setPage] = useState(0)
   const size = 10
 
+  // Filter states
+  const [busStatusFilter, setBusStatusFilter] = useState<string>('all')
+  const [accessibilityFilter, setAccessibilityFilter] = useState<string>('all')
+  const [minCapacity, setMinCapacity] = useState<string>('')
+  const [maxCapacity, setMaxCapacity] = useState<string>('')
+  const [circularFilter, setCircularFilter] = useState<string>('all')
+  const [minDistance, setMinDistance] = useState<string>('')
+  const [maxDistance, setMaxDistance] = useState<string>('')
+
   const queryClient = useQueryClient()
 
   // Fetch buses
@@ -215,19 +224,48 @@ export default function AdminBusRoutes() {
     }
   }
 
-  const filteredBuses = buses.filter((bus) =>
-    !searchQuery ||
-    bus.busNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    bus.licensePlate.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredBuses = buses.filter((bus) => {
+    // Search query filter
+    const matchesSearch = !searchQuery ||
+      bus.busNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bus.licensePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bus.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bus.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())
 
-  const filteredRoutes = routes.filter((route) =>
-    !searchQuery ||
-    route.routeNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    route.routeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    route.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    route.destination.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+    // Status filter
+    const matchesStatus = busStatusFilter === 'all' || bus.status.toUpperCase() === busStatusFilter.toUpperCase()
+
+    // Accessibility filter
+    const matchesAccessibility = accessibilityFilter === 'all' ||
+      (accessibilityFilter === 'true' && bus.isAccessible) ||
+      (accessibilityFilter === 'false' && !bus.isAccessible)
+
+    // Capacity filter
+    const matchesMinCapacity = !minCapacity || bus.capacity >= parseInt(minCapacity)
+    const matchesMaxCapacity = !maxCapacity || bus.capacity <= parseInt(maxCapacity)
+
+    return matchesSearch && matchesStatus && matchesAccessibility && matchesMinCapacity && matchesMaxCapacity
+  })
+
+  const filteredRoutes = routes.filter((route) => {
+    // Search query filter
+    const matchesSearch = !searchQuery ||
+      route.routeNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      route.routeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      route.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      route.destination.toLowerCase().includes(searchQuery.toLowerCase())
+
+    // Circular filter
+    const matchesCircular = circularFilter === 'all' ||
+      (circularFilter === 'true' && route.isCircular) ||
+      (circularFilter === 'false' && !route.isCircular)
+
+    // Distance filter
+    const matchesMinDistance = !minDistance || route.distance >= parseFloat(minDistance)
+    const matchesMaxDistance = !maxDistance || route.distance <= parseFloat(maxDistance)
+
+    return matchesSearch && matchesCircular && matchesMinDistance && matchesMaxDistance
+  })
 
   return (
     <div className="space-y-6">
@@ -255,6 +293,133 @@ export default function AdminBusRoutes() {
           >
             <MapPin className="inline mr-2" size={20} />
             Gestion des Routes
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="card-gradient">
+        <div className="flex items-center gap-2 mb-4">
+          <Search className="h-5 w-5 text-gray-600" />
+          <h3 className="font-semibold text-gray-900">Filtres</h3>
+        </div>
+
+        {activeTab === 'buses' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+              <select
+                value={busStatusFilter}
+                onChange={(e) => setBusStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="AVAILABLE">Disponible</option>
+                <option value="IN_USE">En Service</option>
+                <option value="MAINTENANCE">Maintenance</option>
+                <option value="OUT_OF_SERVICE">Hors Service</option>
+              </select>
+            </div>
+
+            {/* Accessibility Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Accessibilité</label>
+              <select
+                value={accessibilityFilter}
+                onChange={(e) => setAccessibilityFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="all">Tous</option>
+                <option value="true">Accessible</option>
+                <option value="false">Non Accessible</option>
+              </select>
+            </div>
+
+            {/* Min Capacity */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Capacité Min</label>
+              <input
+                type="number"
+                value={minCapacity}
+                onChange={(e) => setMinCapacity(e.target.value)}
+                placeholder="Ex: 30"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Max Capacity */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Capacité Max</label>
+              <input
+                type="number"
+                value={maxCapacity}
+                onChange={(e) => setMaxCapacity(e.target.value)}
+                placeholder="Ex: 50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Circular Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Type de Route</label>
+              <select
+                value={circularFilter}
+                onChange={(e) => setCircularFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="all">Tous les types</option>
+                <option value="true">Circulaire</option>
+                <option value="false">Non Circulaire</option>
+              </select>
+            </div>
+
+            {/* Min Distance */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Distance Min (km)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={minDistance}
+                onChange={(e) => setMinDistance(e.target.value)}
+                placeholder="Ex: 5.0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Max Distance */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Distance Max (km)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={maxDistance}
+                onChange={(e) => setMaxDistance(e.target.value)}
+                placeholder="Ex: 20.0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Clear Filters Button */}
+        <div className="mt-4">
+          <button
+            onClick={() => {
+              setBusStatusFilter('all')
+              setAccessibilityFilter('all')
+              setMinCapacity('')
+              setMaxCapacity('')
+              setCircularFilter('all')
+              setMinDistance('')
+              setMaxDistance('')
+              setSearchQuery('')
+            }}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Réinitialiser tous les filtres
           </button>
         </div>
       </div>

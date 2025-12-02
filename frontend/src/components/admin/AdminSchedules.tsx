@@ -6,16 +6,13 @@ import { routeService } from '@/services/routeService'
 import { busService } from '@/services/busService'
 import { toast } from 'react-hot-toast'
 import { SCHEDULE_TYPES, getScheduleTypeLabel, getScheduleTypeColor, type ScheduleType } from '@/types/scheduleType'
+import { DAYS_FR } from '@/utils/dateHelpers'
 
-const DAYS_MAP: Record<string, string> = {
-  'Lundi': 'MONDAY',
-  'Mardi': 'TUESDAY',
-  'Mercredi': 'WEDNESDAY',
-  'Jeudi': 'THURSDAY',
-  'Vendredi': 'FRIDAY',
-  'Samedi': 'SATURDAY',
-  'Dimanche': 'SUNDAY',
-}
+// Reverse mapping: French -> English day names for API
+const DAYS_MAP: Record<string, string> = Object.entries(DAYS_FR).reduce((acc, [eng, fr]) => {
+  acc[fr] = eng
+  return acc
+}, {} as Record<string, string>)
 
 export default function AdminSchedules() {
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -25,8 +22,17 @@ export default function AdminSchedules() {
   const page = 0
   const size = 20
 
+  // Filter states
+  const [scheduleTypeFilter, setScheduleTypeFilter] = useState<string>('all')
+  const [routeFilter, setRouteFilter] = useState<string>('all')
+  const [busFilter, setBusFilter] = useState<string>('all')
+  const [activeFilter, setActiveFilter] = useState<string>('all')
+  const [departureTimeFrom, setDepartureTimeFrom] = useState<string>('')
+  const [departureTimeTo, setDepartureTimeTo] = useState<string>('')
+
   const queryClient = useQueryClient()
-  const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+  // French day names in order from DAYS_FR utility
+  const days = Object.values(DAYS_FR)
 
   // Fetch schedules
   const { data: schedulesData, isLoading: schedulesLoading } = useQuery({
@@ -140,11 +146,33 @@ export default function AdminSchedules() {
   }
 
   const schedules = schedulesData?.content || []
-  
-  // Filter schedules by selected day
-  const filteredSchedules = schedules.filter(schedule =>
-    schedule.daysOfWeek.includes(DAYS_MAP[selectedDay])
-  )
+
+  // Filter schedules by selected day and additional filters
+  const filteredSchedules = schedules.filter(schedule => {
+    // Day filter
+    const matchesDay = schedule.daysOfWeek.includes(DAYS_MAP[selectedDay])
+
+    // Schedule type filter
+    const matchesType = scheduleTypeFilter === 'all' || schedule.scheduleType === scheduleTypeFilter
+
+    // Route filter
+    const matchesRoute = routeFilter === 'all' || schedule.routeId?.toString() === routeFilter
+
+    // Bus filter
+    const matchesBus = busFilter === 'all' || schedule.busId?.toString() === busFilter
+
+    // Active filter
+    const matchesActive = activeFilter === 'all' ||
+      (activeFilter === 'true' && schedule.isActive) ||
+      (activeFilter === 'false' && !schedule.isActive)
+
+    // Time range filter
+    const matchesDepartureFrom = !departureTimeFrom || schedule.departureTime >= departureTimeFrom
+    const matchesDepartureTo = !departureTimeTo || schedule.departureTime <= departureTimeTo
+
+    return matchesDay && matchesType && matchesRoute && matchesBus && matchesActive &&
+           matchesDepartureFrom && matchesDepartureTo
+  })
 
   const getRouteInfo = (schedule: ScheduleResponse) => {
     if (schedule.routeName && schedule.routeNumber) {
@@ -181,6 +209,119 @@ export default function AdminSchedules() {
               {day}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="card-gradient">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="h-5 w-5 text-gray-600" />
+          <h3 className="font-semibold text-gray-900">Filtres</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Schedule Type Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Type d'horaire</label>
+            <select
+              value={scheduleTypeFilter}
+              onChange={(e) => setScheduleTypeFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="all">Tous les types</option>
+              <option value="REGULAR">Régulier</option>
+              <option value="PEAK">Heures de pointe</option>
+              <option value="NIGHT">Nocturne</option>
+              <option value="WEEKEND">Week-end</option>
+            </select>
+          </div>
+
+          {/* Route Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ligne</label>
+            <select
+              value={routeFilter}
+              onChange={(e) => setRouteFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="all">Toutes les lignes</option>
+              {routesData?.content.map((route) => (
+                <option key={route.id} value={route.id}>
+                  {route.routeNumber} - {route.routeName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Bus Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Bus</label>
+            <select
+              value={busFilter}
+              onChange={(e) => setBusFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="all">Tous les bus</option>
+              {busesData?.content.map((bus) => (
+                <option key={bus.id} value={bus.id}>
+                  {bus.busNumber} - {bus.model}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Active Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="all">Tous</option>
+              <option value="true">Actifs</option>
+              <option value="false">Inactifs</option>
+            </select>
+          </div>
+
+          {/* Departure Time From */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Départ après</label>
+            <input
+              type="time"
+              value={departureTimeFrom}
+              onChange={(e) => setDepartureTimeFrom(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Departure Time To */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Départ avant</label>
+            <input
+              type="time"
+              value={departureTimeTo}
+              onChange={(e) => setDepartureTimeTo(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Clear Filters Button */}
+        <div className="mt-4">
+          <button
+            onClick={() => {
+              setScheduleTypeFilter('all')
+              setRouteFilter('all')
+              setBusFilter('all')
+              setActiveFilter('all')
+              setDepartureTimeFrom('')
+              setDepartureTimeTo('')
+            }}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Réinitialiser tous les filtres
+          </button>
         </div>
       </div>
 

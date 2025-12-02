@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { subscriptionService } from '@/services/subscriptionService'
-import { CreditCard, Check, Star, Zap, Crown, ArrowRight, Calendar, DollarSign, X } from 'lucide-react'
+import { CreditCard, Check, Star, Zap, Crown, ArrowRight, Calendar, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
+import { formatDurationDays } from '@/utils/dateUtils'
 
 export default function Subscriptions() {
   const { user } = useAuthStore()
@@ -84,7 +85,7 @@ export default function Subscriptions() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-1">
-                      {subscription.plan?.name || 'Abonnement'}
+                      {subscription.plan?.planName || 'Abonnement'}
                     </h3>
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
@@ -154,18 +155,22 @@ export default function Subscriptions() {
                     <div className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br ${color} rounded-2xl mb-4 shadow-lg`}>
                       <Icon className="text-white" size={32} />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.planName}</h3>
                     <p className="text-gray-600 text-sm">{plan.description}</p>
                   </div>
 
                   <div className="mb-6">
                     <div className="flex items-baseline justify-center gap-2 mb-4">
-                      <DollarSign className="text-gray-400" size={24} />
-                      <span className="text-5xl font-bold gradient-text">{plan.price}</span>
-                      <span className="text-gray-600">
-                        /{plan.duration} {plan.durationUnit}
+                      <span className="text-5xl font-bold gradient-text">
+                        {plan.price.toFixed(2)}
+                      </span>
+                      <span className="text-gray-600 text-lg">
+                        {plan.currency}
                       </span>
                     </div>
+                    <p className="text-center text-gray-500 text-sm">
+                      Durée: {formatDurationDays(plan.durationDays)}
+                    </p>
                   </div>
 
                   <ul className="space-y-3 mb-6">

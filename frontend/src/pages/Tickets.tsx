@@ -1,19 +1,39 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ticketService, type PurchaseTicketRequest } from '@/services/ticketService'
-import { Ticket as TicketIcon, Plus, Clock, DollarSign, QrCode, CheckCircle, Download } from 'lucide-react'
+import { routeService } from '@/services/routeService'
+import { Ticket as TicketIcon, Plus, Clock, DollarSign, QrCode, CheckCircle, Download, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import api from '@/lib/api'
 
 export default function Tickets() {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const [showPurchaseForm, setShowPurchaseForm] = useState(false)
+  const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null)
   
   const { data: tickets = [], isLoading } = useQuery({
     queryKey: ['myTickets', user?.id],
     queryFn: () => user?.id ? ticketService.getMyTickets(user.id) : Promise.resolve([]),
     enabled: !!user?.id,
+  })
+
+  // Fetch all routes for dropdown
+  const { data: routesData } = useQuery({
+    queryKey: ['routes-all'],
+    queryFn: () => routeService.getAllRoutes(0, 100),
+  })
+
+  // Fetch price when route is selected
+  const { data: routePrice, isLoading: priceLoading } = useQuery({
+    queryKey: ['route-price', selectedRouteId],
+    queryFn: async () => {
+      if (!selectedRouteId) return null
+      const response = await api.get<number>(`/api/routes/${selectedRouteId}/price`)
+      return response.data
+    },
+    enabled: !!selectedRouteId,
   })
 
   const purchaseMutation = useMutation({
@@ -36,11 +56,21 @@ export default function Tickets() {
       return
     }
 
+    if (!selectedRouteId) {
+      toast.error('Veuillez sélectionner un itinéraire')
+      return
+    }
+
+    if (!routePrice) {
+      toast.error('Prix non disponible pour cet itinéraire')
+      return
+    }
+
     const formData = new FormData(e.currentTarget)
     const request: PurchaseTicketRequest = {
       idPassager: user.id,
-      idTrajet: parseInt(formData.get('idTrajet') as string),
-      prix: parseFloat(formData.get('prix') as string),
+      idTrajet: selectedRouteId,
+      prix: routePrice,
       methodePaiement: formData.get('methodePaiement') as any,
     }
 
@@ -88,29 +118,46 @@ export default function Tickets() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ID de l'Itinéraire
+                  Itinéraire <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  name="idTrajet"
+                <select
+                  value={selectedRouteId || ''}
+                  onChange={(e) => setSelectedRouteId(e.target.value ? parseInt(e.target.value) : null)}
                   required
                   className="input"
-                  placeholder="Entrez l'ID de l'itinéraire"
-                />
+                >
+                  <option value="">Sélectionnez un itinéraire</option>
+                  {routesData?.content?.map((route: any) => (
+                    <option key={route.id} value={route.id}>
+                      {route.routeNumber} - {route.routeName} ({route.origin} → {route.destination})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Prix (DH)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Prix <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
                   <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="number"
-                    name="prix"
-                    required
-                    step="0.01"
-                    className="input pl-12"
-                    placeholder="0.00"
-                  />
+                  {priceLoading ? (
+                    <div className="input pl-12 flex items-center gap-2 bg-gray-50">
+                      <Loader2 className="animate-spin" size={16} />
+                      <span>Chargement...</span>
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={routePrice ? `${routePrice.toFixed(2)} MAD` : '---'}
+                      readOnly
+                      className="input pl-12 bg-gray-50 cursor-not-allowed"
+                      placeholder="Sélectionnez un itinéraire"
+                    />
+                  )}
                 </div>
+                {selectedRouteId && !routePrice && !priceLoading && (
+                  <p className="text-xs text-amber-600 mt-1">⚠️ Prix non configuré pour cet itinéraire</p>
+                )}
               </div>
             </div>
             <div>

@@ -5,7 +5,8 @@ import 'leaflet/dist/leaflet.css'
 import BusSearchPanel from '@/components/bus-tracking/BusSearchPanel'
 import TrajetInfoPanel from '@/components/bus-tracking/TrajetInfoPanel'
 import { geolocationService, type EnrichedPositionResponse } from '@/services/geolocationService'
-import { RefreshCw, Bus as BusIcon } from 'lucide-react'
+import { useBusTracking } from '@/hooks/useBusTracking'
+import { RefreshCw, Bus as BusIcon, Radio } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // Custom bus icon
@@ -23,11 +24,28 @@ export default function BusTracking() {
   const [selectedBusId, setSelectedBusId] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
+  // WebSocket real-time tracking
+  const { busPositions: realtimePositions, isConnected, error: wsError } = useBusTracking()
+
   useEffect(() => {
     loadPositions()
-    const interval = setInterval(loadPositions, 10000) // Refresh every 10 seconds
+    // Still keep initial load and less frequent polling as fallback
+    const interval = setInterval(loadPositions, 30000) // Reduced to every 30 seconds
     return () => clearInterval(interval)
   }, [])
+
+  // Show WebSocket status changes
+  useEffect(() => {
+    if (isConnected) {
+      toast.success('Connexion temps réel activée 📡', { id: 'websocket-status' })
+    }
+  }, [isConnected])
+
+  useEffect(() => {
+    if (wsError) {
+      toast.error(`Erreur temps réel: ${wsError}`, { id: 'websocket-error' })
+    }
+  }, [wsError])
 
   const loadPositions = async () => {
     try {
@@ -203,6 +221,22 @@ export default function BusTracking() {
         <RefreshCw className={refreshing ? 'animate-spin' : ''} size={18} />
         Actualiser
       </button>
+
+      {/* WebSocket Status Indicator */}
+      <div className="absolute top-4 right-4 z-[1000] bg-white/95 backdrop-blur-sm px-4 py-3 rounded-xl shadow-lg border border-gray-200">
+        <div className="flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+          <Radio className={isConnected ? 'text-green-600' : 'text-gray-400'} size={18} />
+          <span className="font-semibold text-gray-900">
+            {isConnected ? 'Temps Réel' : 'Hors ligne'}
+          </span>
+          {isConnected && realtimePositions.length > 0 && (
+            <span className="text-xs text-gray-500 ml-1">
+              ({realtimePositions.length} bus actifs)
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Trip Info Panel */}
       {selectedBusId && (

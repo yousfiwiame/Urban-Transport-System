@@ -6,6 +6,7 @@ import { authService } from '@/services/authService'
 import { useState } from 'react'
 import { isAdmin, isDriver, getPrimaryRole, getRoleDisplayName } from '@/utils/roles'
 import Logo from '@/components/Logo'
+import NotificationBell from '@/components/NotificationBell'
 
 export default function Layout() {
   const { user, logout: logoutStore } = useAuthStore()
@@ -67,15 +68,16 @@ export default function Layout() {
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex fixed left-0 top-0 h-full w-72 bg-white shadow-2xl z-50 border-r border-gray-200 flex-col">
         <div className="p-6 border-b border-gray-200/50">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <Logo size="md" showText={true} showTagline={true} to="/" />
+            <NotificationBell />
           </div>
           {user && (
             <div className="mt-3 p-3 bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl">
               <p className="text-xs text-gray-600 mb-1">Connecté en tant que</p>
               <p className="font-bold text-gray-900">{user.firstName} {user.lastName}</p>
               <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold border ${
-                isAdmin(user.roles) 
+                isAdmin(user.roles)
                   ? 'bg-red-100 text-red-700 border-red-200'
                   : isDriver(user.roles)
                   ? 'bg-green-100 text-green-700 border-green-200'
@@ -133,12 +135,15 @@ export default function Layout() {
       <header className="lg:hidden fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-xl shadow-lg z-50 border-b border-gray-200/50">
         <div className="flex items-center justify-between p-4">
           <Logo size="sm" showText={true} to="/" />
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
         
         {/* Mobile Menu */}

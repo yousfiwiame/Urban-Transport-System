@@ -3,13 +3,15 @@ import api from '@/lib/api'
 export interface SubscriptionPlan {
   planId: string
   planCode: string
-  name: string
+  planName: string
   description?: string
-  price: number
-  duration: number
-  durationUnit: string
   features?: string[]
+  durationDays: number
+  price: number
+  currency: string
   isActive: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface Subscription {

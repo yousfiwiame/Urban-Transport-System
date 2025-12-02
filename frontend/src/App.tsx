@@ -11,6 +11,7 @@ import Schedules from './pages/Schedules'
 import BusTracking from './pages/BusTracking'
 import Subscriptions from './pages/Subscriptions'
 import Profile from './pages/Profile'
+import Notifications from './pages/Notifications'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminUsers from './components/admin/AdminUsers'
 import AdminBusRoutes from './components/admin/AdminBusRoutes'
@@ -55,7 +56,8 @@ function App() {
           <Route path="tracking" element={<PassengerOrDriverRoute><BusTracking /></PassengerOrDriverRoute>} />
           <Route path="subscriptions" element={<PassengerRoute><Subscriptions /></PassengerRoute>} />
           <Route path="profile" element={<PassengerOrDriverRoute><Profile /></PassengerOrDriverRoute>} />
-          
+          <Route path="notifications" element={<Notifications />} />
+
           {/* Admin Routes */}
           <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
