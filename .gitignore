@@ -45,6 +45,11 @@ terraform/.terraform.lock.hcl
 key.json
 *.pem
 *.key
+.env
+.env.local
+.env.*.local
+backend/**/.env
+frontend/.env
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .github\instructions\snyk_rules.instructions.md
