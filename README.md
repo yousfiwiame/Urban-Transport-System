@@ -1,1424 +1,1026 @@
-# 🚍 Urban Transport Microservices System
+<img src="https://github.com/user-attachments/assets/c245eed9-a723-4c88-96a7-37c845cbd44b" 
+     alt="CityBus Logo" 
+     width="100" 
+     align="left" />
 
-A comprehensive microservices-based urban transportation management system built with Spring Boot, designed to handle user management, ticket purchasing, schedule management, real-time geolocation tracking, subscriptions, and notifications.
+<h1>CityBus – Urban Transport System</h1>
 
-## 📋 Table of Contents
+<br clear="left"/>
+
+A comprehensive microservices-based urban transportation management platform built with Spring Boot and React, featuring real-time vehicle tracking, ticket management, schedule coordination, and user subscriptions.
+
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=gcp,kubernetes,terraform,githubactions,docker" alt="Tech Stack" />
+</p>
+
+## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
-- [Microservices](#microservices)
+  - [System Architecture Diagram](#system-architecture-diagram)
+  - [Cloud Infrastructure Diagram](#cloud-infrastructure-diagram)
+  - [CI/CD Pipeline Diagram](#cicd-pipeline-diagram)
+  - [UML Diagrams](#uml-diagrams)
 - [Technology Stack](#technology-stack)
-- [Project Status](#project-status)
+- [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
+  - [Clone the Repository](#clone-the-repository)
+  - [Required Customizations](#required-customizations)
+  - [Configuration](#configuration)
+- [Local Development](#local-development)
+  - [Backend Services](#backend-services)
+  - [Frontend Application](#frontend-application)
+- [Docker Deployment](#docker-deployment)
+- [Kubernetes Deployment](#kubernetes-deployment)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [Testing](#testing)
+- [API Documentation](#api-documentation)
+- [Quick Reference](#quick-reference)
+- [Contributing](#contributing)
+- [License](#license)
 
-## 🎯 Overview
+## Overview
 
-This project implements a scalable microservices architecture for managing urban public transportation systems. It provides features for passengers to purchase tickets, track buses in real-time, manage subscriptions, and receive notifications about their journeys.
+The Urban Transport System is an enterprise-grade, cloud-native platform designed to modernize public transportation management. The system provides comprehensive solutions for:
 
-### Key Features
+- **User Management**: Secure authentication and authorization with JWT-based security
+- **Ticket Management**: Digital ticketing system with support for single trips and passes
+- **Schedule Management**: Real-time schedule updates and route planning
+- **Geolocation Services**: Live vehicle tracking and location-based services
+- **Subscription Management**: Flexible subscription plans for regular commuters
+- **Notification Services**: Real-time notifications via email and push notifications
+- **Real-time Updates**: WebSocket-based live data streaming for vehicle positions and schedules
 
-- 🔐 **User Authentication & Authorization** - JWT-based security with role management
-- 🎫 **Digital Ticketing** - Purchase, validate, and manage digital tickets with QR codes
-- 📅 **Schedule Management** - Real-time bus schedules, routes, and stops
-- 📍 **Real-time Tracking** - Live bus geolocation and ETA calculations
-- 💳 **Subscription Management** - Monthly passes and subscription plans
-- 🔔 **Smart Notifications** - Real-time alerts via email, SMS, and push notifications
-- 📊 **Monitoring & Logging** - Centralized logging with ELK stack and metrics with Prometheus/Grafana
+The platform is built on a microservices architecture, ensuring scalability, fault tolerance, and independent service deployment. It leverages modern DevOps practices with containerization, orchestration, and automated CI/CD pipelines.
 
-## 🏗️ Architecture
+## Architecture
 
-The system follows a **microservices architecture** with the following key patterns:
+### System Architecture Diagram
 
-- **API Gateway Pattern** - Single entry point for all client requests
-- **Service Registry & Discovery** - Eureka for service registration and discovery
-- **Centralized Configuration** - Config Server for external configuration management
-- **Database per Service** - Each microservice manages its own database
-- **Event-Driven Communication** - Kafka for asynchronous inter-service messaging
-- **CQRS Pattern** - Separation of read and write operations where applicable
-- **Circuit Breaker Pattern** - Resilience4j for fault tolerance
+The application diagram illustrates the high-level architecture of the Urban Transport System, showcasing the interaction between frontend, backend services, and infrastructure components.
 
-### Architecture Diagram
+![Application Architecture](https://github.com/user-attachments/assets/15b0712d-3334-4377-aa94-301ef51fd3f6)
 
-```
-┌─────────────┐
-│   Clients   │
-│ (Web/Mobile)│
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────┐
-│   API Gateway   │ ◄──── Rate Limiting, Auth, Routing
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    │ Eureka  │ ◄──── Service Discovery
-    └─────────┘
-         │
-    ┌────┴────────────────────────────────┐
-    │                                     │
-    ▼                                     ▼
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│    User     │  │   Ticket    │  │  Schedule   │
-│   Service   │  │   Service   │  │   Service   │
-└──────┬──────┘  └──────┬──────┘  └──────┬──────┘
-       │                │                │
-       ▼                ▼                ▼
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│  PostgreSQL │  │  PostgreSQL │  │  PostgreSQL │
-└─────────────┘  └─────────────┘  └─────────────┘
 
-         ┌─────────────┐
-         │    Kafka    │ ◄──── Event Bus
-         └──────┬──────┘
-                │
-    ┌───────────┼───────────┐
-    ▼           ▼           ▼
-┌──────────┐ ┌──────────┐ ┌──────────┐
-│Geolocation│ │Subscription│ │Notification│
-│  Service │ │  Service │ │  Service │
-└────┬─────┘ └────┬─────┘ └────┬─────┘
-     ▼            ▼            ▼
-┌─────────┐  ┌─────────┐  ┌─────────┐
-│ MongoDB │  │PostgreSQL│ │PostgreSQL│
-└─────────┘  └─────────┘  └─────────┘
-```
+**Description**: The system follows a microservices architecture pattern with the following components:
 
-## 🚀 Microservices
+- **Frontend Layer**: React-based single-page application providing an intuitive user interface
+- **API Gateway**: Central entry point for all client requests, handling routing, load balancing, and security
+- **Service Registry**: Netflix Eureka-based service discovery for dynamic service registration and discovery
+- **Config Server**: Centralized configuration management for all microservices
+- **Microservices Layer**: Seven independent services handling specific business domains
+- **Data Layer**: Polyglot persistence with PostgreSQL for relational data and MongoDB for geolocation data
+- **Messaging Layer**: Apache Kafka for asynchronous event-driven communication
+- **Caching Layer**: Redis for distributed caching and session management
+- **Monitoring**: Zipkin for distributed tracing and observability
 
-### Infrastructure Services
+<h3 id="cloud-infrastructure-diagram" style="display: flex; align-items: center;">
+  <img src="https://github.com/user-attachments/assets/70930924-a5e1-4ff7-9778-4b4e19717924" width="40" height="40" style="margin-right: 10px;">
+  Cloud Infrastructure Diagram
+</h3>
 
-| Service | Port | Description | Technology |
-|---------|------|-------------|------------|
-| **Config Server** | 8888 | Centralized configuration management | Spring Cloud Config |
-| **Service Registry** | 8761 | Service discovery and registration | Netflix Eureka |
-| **API Gateway** | 8080 | Single entry point, routing, security | Spring Cloud Gateway |
+<p>
+The cloud architecture diagram depicts the <strong>Google Cloud Platform (GCP)</strong> infrastructure setup, including networking, compute resources, and managed services.
+</p>
 
-### Business Services
+<img width="3809" height="4140" alt="Diagramme Cloud" src="https://github.com/user-attachments/assets/fdec1e5f-8521-469b-9ed9-81977bcb6bcc" />
 
-| Service | Port | Description | Database |
-|---------|------|-------------|----------|
-| **User Service** | 8081 | Authentication, authorization, user profiles | PostgreSQL |
-| **Ticket Service** | 8082 | Ticket purchase, validation, QR code generation | PostgreSQL |
-| **Schedule Service** | 8083 | Routes, schedules, stops, timetables | PostgreSQL |
-| **Geolocation Service** | 8084 | Real-time bus tracking, location updates | MongoDB |
-| **Subscription Service** | 8085 | Subscription plans, billing, renewals | PostgreSQL |
-| **Notification Service** | 8086 | Email, SMS, push notifications | PostgreSQL |
 
-## 🛠️ Technology Stack
+**Description**: The infrastructure is deployed on **Google Cloud Platform (GCP)** with the following components:
+
+- **Google Kubernetes Engine (GKE)**: Managed Kubernetes cluster for container orchestration
+- **Cloud SQL**: Managed PostgreSQL instances for relational databases
+- **Memorystore**: Managed Redis instance for caching
+- **Cloud Load Balancing**: Global load balancer for high availability
+
+All infrastructure is provisioned using **Terraform**, enabling infrastructure as code practices.
+
+<h3 id="cicd-pipeline-diagram" style="display: flex; align-items: center;">
+  <img src="https://github.com/user-attachments/assets/9ec052f2-edd2-4d61-9d6b-115c1fb415fb" width="40" height="40" style="margin-right: 10px;">
+  CI/CD Pipeline Diagram
+</h3>
+
+<p>
+The pipeline architecture diagram illustrates the automated build, test, and deployment workflow.
+</p>
+
+![Pipeline Architecture](https://github.com/user-attachments/assets/b5698907-6e40-4504-94d7-0c94aae2bd75)
+
+
+**Description**: The CI/CD pipeline is implemented using **GitHub Actions** with the following stages:
+
+1. **Source Control**: Code changes trigger automated workflows
+2. **Build Stage**: Parallel builds for backend (Maven) and frontend (npm)
+3. **Test Stage**: Unit tests, integration tests, and E2E tests with Playwright
+4. **Quality Gates**: Code quality checks and security scanning
+5. **Containerization**: Docker image building and pushing to GitHub Container Registry
+6. **Deployment**: Automated deployment to GKE with rolling updates
+7. **Verification**: Health checks and smoke tests post-deployment
+
+The pipeline supports multiple environments (staging, production) with environment-specific configurations.
+
+### UML Diagrams
+
+The UML diagrams provide detailed views of the system's static and dynamic behavior.
+
+**Description**: The UML diagrams include:
+
+- **Use Case Diagram**: Provides a high-level view of how users and external actors interact with the system and its core functionalities.
+
+<img width="4602" height="4122" alt="DiagrammeDesCasUtilisation" src="https://github.com/user-attachments/assets/660d174c-734e-48ad-b569-529395603712" />
+
+- **Class Diagram**: Defines the domain model of each microservice, showing key entities, attributes, and relationships.
+
+![DiagrammeDeClasse](https://github.com/user-attachments/assets/f569d562-732b-4f03-94b0-cb3b896a8608)
+
+- **Sequence Diagrams**: Illustrate the inter-service communication flow for essential use cases across the microservices.Inter-service communication flows for key use cases
+
+<img width="858" height="782" alt="DiagrammeSéquence1" src="https://github.com/user-attachments/assets/b15bbf12-0427-4154-87ef-ec52c716d608" />
+
+<img width="653" height="548" alt="DiagrammeSéquence2" src="https://github.com/user-attachments/assets/bbe83fe8-5f89-4674-aa49-3118a0bf3647" />
+
+<img width="809" height="738" alt="DiagrammeSéquence3" src="https://github.com/user-attachments/assets/3ae27208-19d4-4667-a586-29fafe7a4cf2" />
+
+<img width="756" height="548" alt="DiagrammeSéquence4" src="https://github.com/user-attachments/assets/4fa1b902-98e9-4de0-835b-c47a2fa1ed14" />
+
+These diagrams serve as technical documentation for understanding our system design and implementation details.
+
+## Technology Stack
 
 ### Backend
+<p>
+  <img src="https://skillicons.dev/icons?i=spring,java,maven,kafka,redis" alt="Backend Technologies" />
+</p>
 
-- **Framework:** Spring Boot 3.x
-- **Language:** Java 17+
-- **Build Tool:** Maven
-- **Service Communication:** REST APIs, Apache Kafka
-- **Service Discovery:** Netflix Eureka
-- **API Gateway:** Spring Cloud Gateway
-- **Configuration:** Spring Cloud Config
-- **Security:** Spring Security, JWT, OAuth2
-
-### Databases
-
-- **Relational:** PostgreSQL (User, Ticket, Schedule, Subscription, Notification services)
-- **NoSQL:** MongoDB (Geolocation service)
-- **Caching:** Redis
-- **Message Broker:** Apache Kafka
-
-### DevOps & Infrastructure
-
-- **Containerization:** Docker, Docker Compose
-- **Orchestration:** Kubernetes
-- **Infrastructure as Code:** Terraform
-- **CI/CD:** GitHub Actions
-- **Monitoring:** Prometheus, Grafana
-- **Logging:** ELK Stack (Elasticsearch, Logstash, Kibana)
-- **Distributed Tracing:** Zipkin/Jaeger
+- **Framework**: Spring Boot 3.x
+- **Language**: Java 17
+- **Build Tool**: Maven
+- **API Gateway**: Spring Cloud Gateway
+- **Service Discovery**: Netflix Eureka
+- **Configuration**: Spring Cloud Config
+- **Security**: Spring Security + JWT
+- **Messaging**: Apache Kafka
+- **Caching**: Redis
+- **Tracing**: Zipkin (OpenTelemetry)
 
 ### Frontend
+<p>
+  <img src="https://skillicons.dev/icons?i=react,ts,vite,tailwind,playwright" alt="Frontend Technologies" />
+</p>
 
-- **Framework:** React.js
-- **State Management:** Redux/Context API
-- **UI Library:** Material-UI / Tailwind CSS
-- **Mobile:** React Native
+- **Framework**: React 18
+- **Language**: TypeScript
+- **Build Tool**: Vite
+- **State Management**: Zustand
+- **Data Fetching**: TanStack Query (React Query)
+- **Routing**: React Router v6
+- **UI Framework**: Tailwind CSS
+- **Maps**: Leaflet + React Leaflet
+- **Real-time**: STOMP over WebSocket
+- **Testing**: Playwright
 
-## 📊 Project Status
+### Databases
+<p>
+  <img src="https://skillicons.dev/icons?i=postgres,mongodb,redis" alt="Databases" />
+</p>
 
-### ✅ Completed
+- **Relational**: PostgreSQL 15
+- **Document**: MongoDB 7.0
+- **Cache**: Redis 7
 
-- [x] Project structure definition
-- [x] Infrastructure services (Config Server, Eureka, API Gateway)
-- [x] Domain Driven Design
-- [x] UML Diagrams
-- [x] C4 Diagrams
-- [x] BPMN Diagrams
+### Infrastructure
+<p>
+  <img src="https://skillicons.dev/icons?i=docker,kubernetes,gcp,terraform,githubactions" alt="Infrastructure" />
+</p>
 
-### 🚧 In Progress
+- **Containerization**: Docker
+- **Orchestration**: Kubernetes
+- **Cloud Provider**: Google Cloud Platform (GKE)
+- **IaC**: Terraform
+- **CI/CD**: GitHub Actions
+- **Container Registry**: GitHub Container Registry
 
-- [ ] **Database Design (MCD)** - Conceptual data model for each service
-- [ ] **Inter-service Communication** - Define API contracts and event schemas
-- [ ] **Security Implementation** - Complete authentication, authorization, and data encryption
-- [ ] **Technology Stack Finalization** - Select specific frameworks and libraries
-
-### 📝 Pending
-
-#### Database Design (Database per Service)
-- [ ] Create Entity-Relationship Diagrams (MCD) for each service
-- [ ] Define database schemas and migration scripts
-- [ ] Establish relationships between bounded contexts
-- [ ] Design event store for event sourcing (if applicable)
-
-#### Service Interaction Definition
-- [ ] Define REST API contracts (OpenAPI/Swagger specifications)
-- [ ] Design event schemas for Kafka topics
-- [ ] Implement service-to-service authentication
-- [ ] Define retry and timeout strategies
-- [ ] Design circuit breaker patterns
-
-#### Security Mechanisms
-- [ ] **Authentication & Authorization:**
-  - Implement OAuth2/OpenID Connect
-  - JWT token generation and validation
-  - Role-Based Access Control (RBAC)
-  - API key management for external integrations
-  
-- [ ] **Data Encryption:**
-  - TLS/SSL for data in transit
-  - Database encryption at rest
-  - Sensitive data encryption (passwords, payment info)
-  - Secret management (HashiCorp Vault)
-
-- [ ] **API Security:**
-  - Rate limiting per user/IP
-  - CORS configuration
-  - SQL injection prevention
-  - XSS protection
-  - CSRF tokens
-
-#### Tools & Technologies Definition
-- [ ] **Programming Languages:** Java 17, JavaScript/TypeScript
-- [ ] **Frameworks:** Spring Boot, React, React Native
-- [ ] **Testing:** JUnit 5, Mockito, TestContainers, Cypress
-- [ ] **Deployment:** Docker, Kubernetes, AWS/Azure/GCP
-- [ ] **Monitoring:** Prometheus, Grafana, ELK Stack
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Java 17** or higher
-- **Maven 3.8+**
-- **Docker & Docker Compose**
-- **Node.js 18+** (for frontend)
-- **PostgreSQL 14+**
-- **MongoDB 6+**
-- **Apache Kafka 3.x**
-- **Redis 7+**
-- **Git**
-
-Optional (for production deployment):
-- **Kubernetes** (Minikube for local, EKS/AKS/GKE for cloud)
-- **Terraform**
-- **kubectl**
-- **Helm**
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-transport-urbain-microservices/
+Urban-Transport-System/
 │
-├── backend/
-│   │
-│   ├── config-server/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/transport/config/
-│   │   │   │   │   ├── ConfigServerApplication.java
-│   │   │   │   │   └── SecurityConfig.java
-│   │   │   │   └── resources/
-│   │   │   │       ├── application.yml
-│   │   │   │       └── bootstrap.yml
-│   │   │   └── test/
-│   │   ├── config-repo/
-│   │   │   ├── api-gateway.yml
-│   │   │   ├── api-gateway-dev.yml
-│   │   │   ├── api-gateway-prod.yml
-│   │   │   ├── user-service.yml
-│   │   │   ├── user-service-dev.yml
-│   │   │   ├── user-service-prod.yml
-│   │   │   ├── ticket-service.yml
-│   │   │   ├── schedule-service.yml
-│   │   │   ├── geolocation-service.yml
-│   │   │   ├── subscription-service.yml
-│   │   │   └── notification-service.yml
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── service-registry/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/transport/registry/
-│   │   │   │   │   ├── ServiceRegistryApplication.java
-│   │   │   │   │   └── SecurityConfig.java
-│   │   │   │   └── resources/
-│   │   │   │       ├── application.yml
-│   │   │   │       └── bootstrap.yml
-│   │   │   └── test/
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── api-gateway/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/transport/gateway/
-│   │   │   │   │   ├── config/
-│   │   │   │   │   │   ├── GatewayConfig.java
-│   │   │   │   │   │   ├── SecurityConfig.java
-│   │   │   │   │   │   ├── CorsConfig.java
-│   │   │   │   │   │   ├── RouteConfig.java
-│   │   │   │   │   │   └── RateLimitConfig.java
-│   │   │   │   │   ├── filter/
-│   │   │   │   │   │   ├── AuthenticationFilter.java
-│   │   │   │   │   │   ├── LoggingFilter.java
-│   │   │   │   │   │   └── RequestValidationFilter.java
-│   │   │   │   │   ├── exception/
-│   │   │   │   │   │   ├── GlobalExceptionHandler.java
-│   │   │   │   │   │   └── GatewayException.java
-│   │   │   │   │   ├── util/
-│   │   │   │   │   │   ├── JwtUtil.java
-│   │   │   │   │   │   └── ResponseUtil.java
-│   │   │   │   │   └── ApiGatewayApplication.java
-│   │   │   │   └── resources/
-│   │   │   │       ├── application.yml
-│   │   │   │       ├── application-dev.yml
-│   │   │   │       ├── application-prod.yml
-│   │   │   │       └── bootstrap.yml
-│   │   │   └── test/
-│   │   │       └── java/com/transport/gateway/
-│   │   │           ├── filter/
-│   │   │           │   └── AuthenticationFilterTest.java
-│   │   │           └── integration/
-│   │   │               └── GatewayIntegrationTest.java
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── user-service/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/transport/user/
-│   │   │   │   │   ├── controller/
-│   │   │   │   │   │   ├── UserController.java
-│   │   │   │   │   │   ├── AuthController.java
-│   │   │   │   │   │   └── ProfileController.java
-│   │   │   │   │   ├── service/
-│   │   │   │   │   │   ├── UserService.java
-│   │   │   │   │   │   ├── UserServiceImpl.java
-│   │   │   │   │   │   ├── AuthService.java
-│   │   │   │   │   │   ├── AuthServiceImpl.java
-│   │   │   │   │   │   ├── JwtService.java
-│   │   │   │   │   │   └── JwtServiceImpl.java
-│   │   │   │   │   ├── repository/
-│   │   │   │   │   │   ├── UserRepository.java
-│   │   │   │   │   │   ├── RoleRepository.java
-│   │   │   │   │   │   └── RefreshTokenRepository.java
-│   │   │   │   │   ├── model/
-│   │   │   │   │   │   ├── User.java
-│   │   │   │   │   │   ├── Role.java
-│   │   │   │   │   │   ├── Permission.java
-│   │   │   │   │   │   ├── RefreshToken.java
-│   │   │   │   │   │   └── UserProfile.java
-│   │   │   │   │   ├── dto/
-│   │   │   │   │   │   ├── request/
-│   │   │   │   │   │   │   ├── LoginRequest.java
-│   │   │   │   │   │   │   ├── RegisterRequest.java
-│   │   │   │   │   │   │   ├── UpdateProfileRequest.java
-│   │   │   │   │   │   │   └── ChangePasswordRequest.java
-│   │   │   │   │   │   ├── response/
-│   │   │   │   │   │   │   ├── UserResponse.java
-│   │   │   │   │   │   │   ├── AuthResponse.java
-│   │   │   │   │   │   │   ├── ProfileResponse.java
-│   │   │   │   │   │   │   └── JwtResponse.java
-│   │   │   │   │   │   └── mapper/
-│   │   │   │   │   │       ├── UserMapper.java
-│   │   │   │   │   │       └── ProfileMapper.java
-│   │   │   │   │   ├── security/
-│   │   │   │   │   │   ├── SecurityConfig.java
-│   │   │   │   │   │   ├── JwtAuthenticationFilter.java
-│   │   │   │   │   │   ├── JwtAuthenticationEntryPoint.java
-│   │   │   │   │   │   ├── CustomUserDetailsService.java
-│   │   │   │   │   │   └── PasswordEncoderConfig.java
-│   │   │   │   │   ├── config/
-│   │   │   │   │   │   ├── DatabaseConfig.java
-│   │   │   │   │   │   ├── KafkaProducerConfig.java
-│   │   │   │   │   │   ├── SwaggerConfig.java
-│   │   │   │   │   │   └── RedisConfig.java
-│   │   │   │   │   ├── exception/
-│   │   │   │   │   │   ├── GlobalExceptionHandler.java
-│   │   │   │   │   │   ├── UserNotFoundException.java
-│   │   │   │   │   │   ├── DuplicateUserException.java
-│   │   │   │   │   │   ├── InvalidCredentialsException.java
-│   │   │   │   │   │   └── TokenExpiredException.java
-│   │   │   │   │   ├── event/
-│   │   │   │   │   │   ├── UserCreatedEvent.java
-│   │   │   │   │   │   ├── UserUpdatedEvent.java
-│   │   │   │   │   │   ├── UserDeletedEvent.java
-│   │   │   │   │   │   └── producer/
-│   │   │   │   │   │       └── UserEventProducer.java
-│   │   │   │   │   ├── validation/
-│   │   │   │   │   │   ├── EmailValidator.java
-│   │   │   │   │   │   ├── PasswordValidator.java
-│   │   │   │   │   │   └── PhoneValidator.java
-│   │   │   │   │   ├── util/
-│   │   │   │   │   │   ├── DateUtil.java
-│   │   │   │   │   │   └── ValidationUtil.java
-│   │   │   │   │   └── UserServiceApplication.java
-│   │   │   │   └── resources/
-│   │   │   │       ├── application.yml
-│   │   │   │       ├── application-dev.yml
-│   │   │   │       ├── application-prod.yml
-│   │   │   │       ├── db/
-│   │   │   │       │   └── migration/
-│   │   │   │       │       ├── V1__create_users_table.sql
-│   │   │   │       │       ├── V2__create_roles_table.sql
-│   │   │   │       │       ├── V3__create_permissions_table.sql
-│   │   │   │       │       └── V4__create_refresh_tokens_table.sql
-│   │   │   │       └── logback-spring.xml
-│   │   │   └── test/
-│   │   │       └── java/com/transport/user/
-│   │   │           ├── controller/
-│   │   │           │   ├── UserControllerTest.java
-│   │   │           │   └── AuthControllerTest.java
-│   │   │           ├── service/
-│   │   │           │   ├── UserServiceTest.java
-│   │   │           │   └── AuthServiceTest.java
-│   │   │           ├── repository/
-│   │   │           │   └── UserRepositoryTest.java
-│   │   │           └── integration/
-│   │   │               └── UserIntegrationTest.java
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── ticket-service/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/transport/ticket/
-│   │   │   │   │   ├── controller/
-│   │   │   │   │   │   ├── TicketController.java
-│   │   │   │   │   │   ├── PaymentController.java
-│   │   │   │   │   │   └── TransactionController.java
-│   │   │   │   │   ├── service/
-│   │   │   │   │   │   ├── TicketService.java
-│   │   │   │   │   │   ├── TicketServiceImpl.java
-│   │   │   │   │   │   ├── PaymentService.java
-│   │   │   │   │   │   ├── PaymentServiceImpl.java
-│   │   │   │   │   │   ├── QRCodeService.java
-│   │   │   │   │   │   ├── QRCodeServiceImpl.java
-│   │   │   │   │   │   ├── ValidationService.java
-│   │   │   │   │   │   └── ValidationServiceImpl.java
-│   │   │   │   │   ├── repository/
-│   │   │   │   │   │   ├── TicketRepository.java
-│   │   │   │   │   │   ├── TransactionRepository.java
-│   │   │   │   │   │   └── TicketTypeRepository.java
-│   │   │   │   │   ├── model/
-│   │   │   │   │   │   ├── Ticket.java
-│   │   │   │   │   │   ├── TicketType.java
-│   │   │   │   │   │   ├── Transaction.java
-│   │   │   │   │   │   ├── Payment.java
-│   │   │   │   │   │   ├── TicketStatus.java (enum)
-│   │   │   │   │   │   ├── PaymentStatus.java (enum)
-│   │   │   │   │   │   └── PaymentMethod.java (enum)
-│   │   │   │   │   ├── dto/
-│   │   │   │   │   │   ├── request/
-│   │   │   │   │   │   │   ├── PurchaseTicketRequest.java
-│   │   │   │   │   │   │   ├── ValidateTicketRequest.java
-│   │   │   │   │   │   │   └── PaymentRequest.java
-│   │   │   │   │   │   ├── response/
-│   │   │   │   │   │   │   ├── TicketResponse.java
-│   │   │   │   │   │   │   ├── PurchaseResponse.java
-│   │   │   │   │   │   │   ├── PaymentResponse.java
-│   │   │   │   │   │   │   └── TransactionResponse.java
-│   │   │   │   │   │   └── mapper/
-│   │   │   │   │   │       ├── TicketMapper.java
-│   │   │   │   │   │       └── TransactionMapper.java
-│   │   │   │   │   ├── config/
-│   │   │   │   │   │   ├── DatabaseConfig.java
-│   │   │   │   │   │   ├── KafkaProducerConfig.java
-│   │   │   │   │   │   ├── KafkaConsumerConfig.java
-│   │   │   │   │   │   ├── SwaggerConfig.java
-│   │   │   │   │   │   └── PaymentGatewayConfig.java
-│   │   │   │   │   ├── exception/
-│   │   │   │   │   │   ├── GlobalExceptionHandler.java
-│   │   │   │   │   │   ├── TicketNotFoundException.java
-│   │   │   │   │   │   ├── InvalidTicketException.java
-│   │   │   │   │   │   ├── PaymentFailedException.java
-│   │   │   │   │   │   └── InsufficientBalanceException.java
-│   │   │   │   │   ├── event/
-│   │   │   │   │   │   ├── TicketPurchasedEvent.java
-│   │   │   │   │   │   ├── TicketValidatedEvent.java
-│   │   │   │   │   │   ├── PaymentProcessedEvent.java
-│   │   │   │   │   │   ├── producer/
-│   │   │   │   │   │   │   └── TicketEventProducer.java
-│   │   │   │   │   │   └── consumer/
-│   │   │   │   │   │       └── UserEventConsumer.java
-│   │   │   │   │   ├── payment/
-│   │   │   │   │   │   ├── gateway/
-│   │   │   │   │   │   │   ├── PaymentGateway.java
-│   │   │   │   │   │   │   ├── StripeGateway.java
-│   │   │   │   │   │   │   └── PayPalGateway.java
-│   │   │   │   │   │   └── strategy/
-│   │   │   │   │   │       ├── PaymentStrategy.java
-│   │   │   │   │   │       └── PaymentStrategyFactory.java
-│   │   │   │   │   ├── saga/
-│   │   │   │   │   │   ├── TicketPurchaseSaga.java
-│   │   │   │   │   │   └── SagaOrchestrator.java
-│   │   │   │   │   ├── util/
-│   │   │   │   │   │   ├── QRCodeGenerator.java
-│   │   │   │   │   │   └── PriceCalculator.java
-│   │   │   │   │   └── TicketServiceApplication.java
-│   │   │   │   └── resources/
-│   │   │   │       ├── application.yml
-│   │   │   │       ├── db/migration/
-│   │   │   │       │   ├── V1__create_tickets_table.sql
-│   │   │   │       │   ├── V2__create_ticket_types_table.sql
-│   │   │   │       │   ├── V3__create_transactions_table.sql
-│   │   │   │       │   └── V4__create_payments_table.sql
-│   │   │   │       └── logback-spring.xml
-│   │   │   └── test/
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── schedule-service/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/transport/schedule/
-│   │   │   │   │   ├── controller/
-│   │   │   │   │   │   ├── ScheduleController.java
-│   │   │   │   │   │   ├── RouteController.java
-│   │   │   │   │   │   ├── StopController.java
-│   │   │   │   │   │   └── BusController.java
-│   │   │   │   │   ├── service/
-│   │   │   │   │   │   ├── ScheduleService.java
-│   │   │   │   │   │   ├── ScheduleServiceImpl.java
-│   │   │   │   │   │   ├── RouteService.java
-│   │   │   │   │   │   ├── RouteServiceImpl.java
-│   │   │   │   │   │   ├── StopService.java
-│   │   │   │   │   │   ├── StopServiceImpl.java
-│   │   │   │   │   │   ├── BusService.java
-│   │   │   │   │   │   └── BusServiceImpl.java
-│   │   │   │   │   ├── repository/
-│   │   │   │   │   │   ├── ScheduleRepository.java
-│   │   │   │   │   │   ├── RouteRepository.java
-│   │   │   │   │   │   ├── StopRepository.java
-│   │   │   │   │   │   └── BusRepository.java
-│   │   │   │   │   ├── model/
-│   │   │   │   │   │   ├── Schedule.java
-│   │   │   │   │   │   ├── Route.java
-│   │   │   │   │   │   ├── Stop.java
-│   │   │   │   │   │   ├── Bus.java
-│   │   │   │   │   │   ├── RouteStop.java
-│   │   │   │   │   │   ├── DayOfWeek.java (enum)
-│   │   │   │   │   │   └── BusStatus.java (enum)
-│   │   │   │   │   ├── dto/
-│   │   │   │   │   │   ├── request/
-│   │   │   │   │   │   │   ├── CreateScheduleRequest.java
-│   │   │   │   │   │   │   ├── UpdateScheduleRequest.java
-│   │   │   │   │   │   │   ├── CreateRouteRequest.java
-│   │   │   │   │   │   │   ├── CreateStopRequest.java
-│   │   │   │   │   │   │   └── SearchScheduleRequest.java
-│   │   │   │   │   │   ├── response/
-│   │   │   │   │   │   │   ├── ScheduleResponse.java
-│   │   │   │   │   │   │   ├── RouteResponse.java
-│   │   │   │   │   │   │   ├── StopResponse.java
-│   │   │   │   │   │   │   ├── BusResponse.java
-│   │   │   │   │   │   │   └── RouteDetailsResponse.java
-│   │   │   │   │   │   └── mapper/
-│   │   │   │   │   │       ├── ScheduleMapper.java
-│   │   │   │   │   │       ├── RouteMapper.java
-│   │   │   │   │   │       └── StopMapper.java
-│   │   │   │   │   ├── config/
-│   │   │   │   │   │   ├── DatabaseConfig.java
-│   │   │   │   │   │   ├── KafkaProducerConfig.java
-│   │   │   │   │   │   ├── KafkaConsumerConfig.java
-│   │   │   │   │   │   ├── SwaggerConfig.java
-│   │   │   │   │   │   └── CacheConfig.java
-│   │   │   │   │   ├── exception/
-│   │   │   │   │   │   ├── GlobalExceptionHandler.java
-│   │   │   │   │   │   ├── ScheduleNotFoundException.java
-│   │   │   │   │   │   ├── RouteNotFoundException.java
-│   │   │   │   │   │   ├── StopNotFoundException.java
-│   │   │   │   │   │   └── InvalidScheduleException.java
-│   │   │   │   │   ├── event/
-│   │   │   │   │   │   ├── ScheduleCreatedEvent.java
-│   │   │   │   │   │   ├── ScheduleUpdatedEvent.java
-│   │   │   │   │   │   ├── RouteChangedEvent.java
-│   │   │   │   │   │   ├── producer/
-│   │   │   │   │   │   │   └── ScheduleEventProducer.java
-│   │   │   │   │   │   └── consumer/
-│   │   │   │   │   │       └── BusLocationConsumer.java
-│   │   │   │   │   ├── util/
-│   │   │   │   │   │   ├── TimeCalculator.java
-│   │   │   │   │   │   └── RouteOptimizer.java
-│   │   │   │   │   └── ScheduleServiceApplication.java
-│   │   │   │   └── resources/
-│   │   │   │       ├── application.yml
-│   │   │   │       ├── db/migration/
-│   │   │   │       │   ├── V1__create_routes_table.sql
-│   │   │   │       │   ├── V2__create_stops_table.sql
-│   │   │   │       │   ├── V3__create_schedules_table.sql
-│   │   │   │       │   ├── V4__create_buses_table.sql
-│   │   │   │       │   └── V5__create_route_stops_table.sql
-│   │   │   │       └── logback-spring.xml
-│   │   │   └── test/
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── geolocation-service/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/transport/geo/
-│   │   │   │   │   ├── controller/
-│   │   │   │   │   │   ├── GeolocationController.java
-│   │   │   │   │   │   ├── TrackingController.java
-│   │   │   │   │   │   └── WebSocketController.java
-│   │   │   │   │   ├── service/
-│   │   │   │   │   │   ├── GeolocationService.java
-│   │   │   │   │   │   ├── GeolocationServiceImpl.java
-│   │   │   │   │   │   ├── TrackingService.java
-│   │   │   │   │   │   ├── TrackingServiceImpl.java
-│   │   │   │   │   │   ├── MapService.java
-│   │   │   │   │   │   ├── MapServiceImpl.java
-│   │   │   │   │   │   ├── DistanceCalculationService.java
-│   │   │   │   │   │   └── ETACalculationService.java
-│   │   │   │   │   ├── repository/
-│   │   │   │   │   │   ├── BusLocationRepository.java
-│   │   │   │   │   │   ├── TrackingHistoryRepository.java
-│   │   │   │   │   │   └── GeofenceRepository.java
-│   │   │   │   │   ├── model/
-│   │   │   │   │   │   ├── BusLocation.java
-│   │   │   │   │   │   ├── TrackingHistory.java
-│   │   │   │   │   │   ├── Geofence.java
-│   │   │   │   │   │   ├── Coordinates.java
-│   │   │   │   │   │   └── LocationStatus.java (enum)
-│   │   │   │   │   ├── dto/
-│   │   │   │   │   │   ├── request/
-│   │   │   │   │   │   │   ├── UpdateLocationRequest.java
-│   │   │   │   │   │   │   ├── TrackBusRequest.java
-│   │   │   │   │   │   │   └── CalculateETARequest.java
-│   │   │   │   │   │   ├── response/
-│   │   │   │   │   │   │   ├── LocationResponse.java
-│   │   │   │   │   │   │   ├── TrackingResponse.java
-│   │   │   │   │   │   │   ├── ETAResponse.java
-│   │   │   │   │   │   │   └── NearbyBusResponse.java
-│   │   │   │   │   │   └── mapper/
-│   │   │   │   │   │       └── LocationMapper.java
-│   │   │   │   │   ├── config/
-│   │   │   │   │   │   ├── MongoConfig.java
-│   │   │   │   │   │   ├── WebSocketConfig.java
-│   │   │   │   │   │   ├── KafkaConsumerConfig.java
-│   │   │   │   │   │   ├── KafkaProducerConfig.java
-│   │   │   │   │   │   ├── SwaggerConfig.java
-│   │   │   │   │   │   └── RedisConfig.java
-│   │   │   │   │   ├── websocket/
-│   │   │   │   │   │   ├── LocationWebSocketHandler.java
-│   │   │   │   │   │   ├── WebSocketSessionManager.java
-│   │   │   │   │   │   └── WebSocketMessageBroker.java
-│   │   │   │   │   ├── integration/
-│   │   │   │   │   │   ├── GoogleMapsClient.java
-│   │   │   │   │   │   ├── OpenStreetMapClient.java
-│   │   │   │   │   │   └── MapApiClient.java
-│   │   │   │   │   ├── exception/
-│   │   │   │   │   │   ├── GlobalExceptionHandler.java
-│   │   │   │   │   │   ├── LocationNotFoundException.java
-│   │   │   │   │   │   ├── InvalidCoordinatesException.java
-│   │   │   │   │   │   └── MapServiceException.java
-│   │   │   │   │   ├── event/
-│   │   │   │   │   │   ├── LocationUpdatedEvent.java
-│   │   │   │   │   │   ├── BusArrivedEvent.java
-│   │   │   │   │   │   ├── GeofenceEnteredEvent.java
-│   │   │   │   │   │   ├── producer/
-│   │   │   │   │   │   │   └── LocationEventProducer.java
-│   │   │   │   │   │   └── consumer/
-│   │   │   │   │   │       ├── LocationUpdateConsumer.java
-│   │   │   │   │   │       └── ScheduleEventConsumer.java
-│   │   │   │   │   ├── util/
-│   │   │   │   │   │   ├── GeoUtils.java
-│   │   │   │   │   │   ├── DistanceCalculator.java
-│   │   │   │   │   │   └── CoordinateValidator.java
-│   │   │   │   │   └── GeolocationServiceApplication.java
-│   │   │   │   └── resources/
-│   │   │   │       ├── application.yml
-│   │   │   │       └── logback-spring.xml
-│   │   │   └── test/
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── subscription-service/
-│   │   ├── src/
-│   │   │   ├── main/
-│   │   │   │   ├── java/com/transport/subscription/
-│   │   │   │   │   ├── controller/
-│   │   │   │   │   │   ├── SubscriptionController.java
-│   │   │   │   │   │   ├── PlanController.java
-│   │   │   │   │   │   └── BillingController.java
-│   │   │   │   │   ├── service/
-│   │   │   │   │   │   ├── SubscriptionService.java
-│   │   │   │   │   │   ├── SubscriptionServiceImpl.java
-│   │   │   │   │   │   ├── PlanService.java
-│   │   │   │   │   │   ├── PlanServiceImpl.java
-│   │   │   │   │   │   ├── BillingService.java
-│   │   │   │   │   │   ├── BillingServiceImpl.java
-│   │   │   │   │   │   ├── RenewalService.java
-│   │   │   │   │   │   └── RenewalServiceImpl.java
-│   │   │   │   │   ├── repository/
-│   │   │   │   │   │   ├── SubscriptionRepository.java
-│   │   │   │   │   │   ├── PlanRepository.java
-│   │   │   │   │   │   └── BillingHistoryRepository.java
-│   │   │   │   │   ├── model/
-│   │   │   │   │   │   ├── Subscription.java
-│   │   │   │   │   │   ├── Plan.java
-│   │   │   │   │   │   ├── BillingHistory.java
-│   │   │   │   │   │   ├── SubscriptionStatus.java (enum)
-│   │   │   │   │   │   ├── PlanType.java (enum)
-│   │   │   │   │   │   └── BillingCycle.java (enum)
-│   │   │   │   │   ├── dto/
-│   │   │   │   │   │   ├── request/
-│   │   │   │   │   │   │   ├── CreateSubscriptionRequest.java
-│   │   │   │   │   │   │   ├── UpdateSubscriptionRequest.java
-│   │   │   │   │   │   │   ├── CancelSubscriptionRequest.java
-│   │   │   │   │   │   │   └── RenewSubscriptionRequest.java
-│   │   │   │   │   │   ├── response/
-│   │   │   │   │   │   │   ├── SubscriptionResponse.java
-│   │   │   │   │   │   │   ├── PlanResponse.java
-│   │   │   │   │   │   │   └── BillingHistoryResponse.java
-│   │   │   │   │   │   └── mapper/
-│   │   │   │   │   │       ├── SubscriptionMapper.java
-│   │   │   │   │   │       └── PlanMapper.java
-│   │   │   │   │   ├── config/
-│   │   │   │   │   │   ├── DatabaseConfig.java
-│   │   │   │   │   │   ├── KafkaProducerConfig.java
-│   │   │   │   │   │   ├── KafkaConsumerConfig.java
-│   │   │   │   │   │   ├── SwaggerConfig.java
-│   │   │   │   │   │   └── SchedulerConfig.java
-│   │   │   │   │   ├── exception/
-│   │   │   │   │   │   ├── GlobalExceptionHandler.java
-│   │   │   │   │   │   ├── SubscriptionNotFoundException.java
-│   │   │   │   │   │   ├── PlanNotFoundException.java
-│   │   │   │   │   │   ├── SubscriptionExpiredException.java
-│   │   │   │   │   │   └── InvalidSubscriptionException.java
-│   │   │   │   │   ├── event/
-│   │   │   │   │   │   ├── SubscriptionCreatedEvent.java
-│   │   │   │   │   │   ├── SubscriptionRenewedEvent.java
-│   │   │   │   │   │   ├── SubscriptionCancelledEvent.java
-│   │   │   │   │   │   ├── SubscriptionExpiredEvent.java
-│   │   │   │   │   │   ├── producer/
-│   │   │   │   │   │   │   └── SubscriptionEventProducer.java
-│   │   │   │   │   │   └── consumer/
-│   │   │   │   │   │       ├── UserEventConsumer.java
-│   │   │   │   │   │       └── PaymentEventConsumer.java
-│   │   │   │   │   ├── scheduler/
-│   │   │   │   │   │   ├── SubscriptionRenewalScheduler.java
-│   │   │   │   │   │   └── ExpirationCheckScheduler.java
-│   │   │   │   │   ├── util/
-│   │   │   │   │   │   ├── DateCalculator.java
-│   │   │   │   │   │   └── PriceCalculator.java
-│   │   │   │   │   └── SubscriptionServiceApplication.java
-│   │   │   │   └── resources/
-│   │   │   │       ├── application.yml
-│   │   │   │       ├── db/migration/
-│   │   │   │       │   ├── V1__create_plans_table.sql
-│   │   │   │       │   ├── V2__create_subscriptions_table.sql
-│   │   │   │       │   └── V3__create_billing_history_table.sql
-│   │   │   │       └── logback-spring.xml
-│   │   │   └── test/
-│   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   └── notification-service/
-│       ├── src/
-│       │   ├── main/
-│       │   │   ├── java/com/transport/notification/
-│       │   │   │   ├── controller/
-│       │   │   │   │   ├── NotificationController.java
-│       │   │   │   │   └── TemplateController.java
-│       │   │   │   ├── service/
-│       │   │   │   │   ├── NotificationService.java
-│       │   │   │   │   ├── NotificationServiceImpl.java
-│       │   │   │   │   ├── EmailService.java
-│       │   │   │   │   ├── EmailServiceImpl.java
-│       │   │   │   │   ├── SmsService.java
-│       │   │   │   │   ├── SmsServiceImpl.java
-│       │   │   │   │   ├── PushNotificationService.java
-│       │   │   │   │   └── PushNotificationServiceImpl.java
-│       │   │   │   ├── repository/
-│       │   │   │   │   ├── NotificationRepository.java
-│       │   │   │   │   ├── NotificationTemplateRepository.java
-│       │   │   │   │   └── NotificationPreferenceRepository.java
-│       │   │   │   ├── model/
-│       │   │   │   │   ├── Notification.java
-│       │   │   │   │   ├── NotificationTemplate.java
-│       │   │   │   │   ├── NotificationPreference.java
-│       │   │   │   │   ├── NotificationType.java (enum)
-│       │   │   │   │   ├── NotificationStatus.java (enum)
-│       │   │   │   │   └── NotificationChannel.java (enum)
-│       │   │   │   ├── dto/
-│       │   │   │   │   ├── request/
-│       │   │   │   │   │   ├── SendNotificationRequest.java
-│       │   │   │   │   │   ├── CreateTemplateRequest.java
-│       │   │   │   │   │   └── UpdatePreferenceRequest.java
-│       │   │   │   │   ├── response/
-│       │   │   │   │   │   ├── NotificationResponse.java
-│       │   │   │   │   │   ├── TemplateResponse.java
-│       │   │   │   │   │   └── PreferenceResponse.java
-│       │   │   │   │   └── mapper/
-│       │   │   │   │       └── NotificationMapper.java
-│       │   │   │   ├── config/
-│       │   │   │   │   ├── MongoConfig.java
-│       │   │   │   │   ├── KafkaConsumerConfig.java
-│       │   │   │   │   ├── SwaggerConfig.java
-│       │   │   │   │   ├── EmailConfig.java
-│       │   │   │   │   └── SmsConfig.java
-│       │   │   │   ├── consumer/
-│       │   │   │   │   ├── TicketEventConsumer.java
-│       │   │   │   │   ├── ScheduleEventConsumer.java
-│       │   │   │   │   ├── SubscriptionEventConsumer.java
-│       │   │   │   │   ├── LocationEventConsumer.java
-│       │   │   │   │   └── UserEventConsumer.java
-│       │   │   │   ├── email/
-│       │   │   │   │   ├── EmailSender.java
-│       │   │   │   │   ├── EmailTemplateEngine.java
-│       │   │   │   │   └── EmailValidator.java
-│       │   │   │   ├── sms/
-│       │   │   │   │   ├── SmsSender.java
-│       │   │   │   │   ├── TwilioClient.java
-│       │   │   │   │   └── SmsFormatter.java
-│       │   │   │   ├── push/
-│       │   │   │   │   ├── PushNotificationSender.java
-│       │   │   │   │   └── FirebaseClient.java
-│       │   │   │   ├── exception/
-│       │   │   │   │   ├── GlobalExceptionHandler.java
-│       │   │   │   │   ├── NotificationSendException.java
-│       │   │   │   │   ├── TemplateNotFoundException.java
-│       │   │   │   │   └── InvalidRecipientException.java
-│       │   │   │   ├── util/
-│       │   │   │   │   ├── TemplateProcessor.java
-│       │   │   │   │   └── NotificationFormatter.java
-│       │   │   │   └── NotificationServiceApplication.java
-│       │   │   └── resources/
-│       │   │       ├── application.yml
-│       │   │       ├── templates/
-│       │   │       │   ├── email/
-│       │   │       │   │   ├── ticket-confirmation.html
-│       │   │       │   │   ├── subscription-reminder.html
-│       │   │       │   │   ├── delay-notification.html
-│       │   │       │   │   └── welcome.html
-│       │   │       │   └── sms/
-│       │   │       │       ├── ticket-confirmation.txt
-│       │   │       │       └── delay-alert.txt
-│       │   │       └── logback-spring.xml
-│       │   └── test/
-│       ├── pom.xml
-│       ├── Dockerfile
-│       └── README.md
+├── backend/                              # Backend microservices (Java Spring Boot)
+│   ├── pom.xml                           # Parent Maven POM for all backend microservices
+│   ├── api-gateway/                      # API Gateway service (routing, authentication, filtering)
+│   ├── config-server/                    # Centralized configuration server (Spring Cloud Config)
+│   ├── service-registry/                 # Eureka service registry for service discovery
+│   ├── user-service/                     # User management, authentication & roles
+│   ├── ticket-service/                   # Ticket purchasing, validation & QR generation
+│   ├── schedule-service/                 # Management of bus schedules and routes
+│   ├── geolocation-service/              # Real-time vehicle tracking & GPS updates
+│   ├── subscription-service/             # Subscription plans & renewal management
+│   └── notification-service/             # Email, SMS, and push notification handling
 │
-├── frontend/
-│   │
-│   ├── passenger-app/
-│   │   ├── public/
-│   │   │   ├── index.html
-│   │   │   ├── favicon.ico
-│   │   │   ├── manifest.json
-│   │   │   └── robots.txt
-│   │   ├── src/
-│   │   │   ├── api/
-│   │   │   │   ├── axiosConfig.js
-│   │   │   │   ├── authApi.js
-│   │   │   │   ├── ticketApi.js
-│   │   │   │   ├── scheduleApi.js
-│   │   │   │   ├── geolocationApi.js
-│   │   │   │   ├── subscriptionApi.js
-│   │   │   │   └── notificationApi.js
-│   │   │   ├── components/
-│   │   │   │   ├── common/
-│   │   │   │   │   ├── Header.jsx
-│   │   │   │   │   ├── Footer.jsx
-│   │   │   │   │   ├── Sidebar.jsx
-│   │   │   │   │   ├── Navbar.jsx
-│   │   │   │   │   ├── Button.jsx
-│   │   │   │   │   ├── Input.jsx
-│   │   │   │   │   ├── Card.jsx
-│   │   │   │   │   ├── Modal.jsx
-│   │   │   │   │   ├── Loading.jsx
-│   │   │   │   │   ├── ErrorBoundary.jsx
-│   │   │   │   │   └── ProtectedRoute.jsx
-│   │   │   │   ├── auth/
-│   │   │   │   │   ├── LoginForm.jsx
-│   │   │   │   │   ├── RegisterForm.jsx
-│   │   │   │   │   ├── ForgotPassword.jsx
-│   │   │   │   │   └── ResetPassword.jsx
-│   │   │   │   ├── schedule/
-│   │   │   │   │   ├── ScheduleList.jsx
-│   │   │   │   │   ├── ScheduleCard.jsx
-│   │   │   │   │   ├── RouteMap.jsx
-│   │   │   │   │   ├── SearchSchedule.jsx
-│   │   │   │   │   └── ScheduleFilter.jsx
-│   │   │   │   ├── ticket/
-│   │   │   │   │   ├── TicketPurchase.jsx
-│   │   │   │   │   ├── TicketList.jsx
-│   │   │   │   │   ├── TicketCard.jsx
-│   │   │   │   │   ├── TicketQRCode.jsx
-│   │   │   │   │   ├── PaymentForm.jsx
-│   │   │   │   │   └── TicketHistory.jsx
-│   │   │   │   ├── tracking/
-│   │   │   │   │   ├── BusTracker.jsx
-│   │   │   │   │   ├── MapView.jsx
-│   │   │   │   │   ├── BusMarker.jsx
-│   │   │   │   │   ├── StopMarker.jsx
-│   │   │   │   │   └── ETADisplay.jsx
-│   │   │   │   ├── subscription/
-│   │   │   │   │   ├── SubscriptionPlans.jsx
-│   │   │   │   │   ├── PlanCard.jsx
-│   │   │   │   │   ├── MySubscription.jsx
-│   │   │   │   │   ├── SubscriptionHistory.jsx
-│   │   │   │   │   └── RenewalSettings.jsx
-│   │   │   │   └── profile/
-│   │   │   │       ├── UserProfile.jsx
-│   │   │   │       ├── EditProfile.jsx
-│   │   │   │       ├── ChangePassword.jsx
-│   │   │   │       └── NotificationSettings.jsx
-│   │   │   ├── pages/
-│   │   │   │   ├── Home.jsx
-│   │   │   │   ├── Login.jsx
-│   │   │   │   ├── Register.jsx
-│   │   │   │   ├── Dashboard.jsx
-│   │   │   │   ├── Schedules.jsx
-│   │   │   │   ├── Tickets.jsx
-│   │   │   │   ├── BusTracking.jsx
-│   │   │   │   ├── Subscriptions.jsx
-│   │   │   │   ├── Profile.jsx
-│   │   │   │   ├── NotFound.jsx
-│   │   │   │   └── Unauthorized.jsx
-│   │   │   ├── store/
-│   │   │   │   ├── store.js
-│   │   │   │   ├── slices/
-│   │   │   │   │   ├── authSlice.js
-│   │   │   │   │   ├── ticketSlice.js
-│   │   │   │   │   ├── scheduleSlice.js
-│   │   │   │   │   ├── locationSlice.js
-│   │   │   │   │   ├── subscriptionSlice.js
-│   │   │   │   │   └── notificationSlice.js
-│   │   │   │   └── middleware/
-│   │   │   │       ├── authMiddleware.js
-│   │   │   │       └── errorMiddleware.js
-│   │   │   ├── hooks/
-│   │   │   │   ├── useAuth.js
-│   │   │   │   ├── useWebSocket.js
-│   │   │   │   ├── useGeolocation.js
-│   │   │   │   ├── useLocalStorage.js
-│   │   │   │   └── useDebounce.js
-│   │   │   ├── utils/
-│   │   │   │   ├── constants.js
-│   │   │   │   ├── validators.js
-│   │   │   │   ├── formatters.js
-│   │   │   │   ├── dateUtils.js
-│   │   │   │   ├── tokenUtils.js
-│   │   │   │   └── mapUtils.js
-│   │   │   ├── services/
-│   │   │   │   ├── authService.js
-│   │   │   │   ├── websocketService.js
-│   │   │   │   ├── localStorageService.js
-│   │   │   │   └── notificationService.js
-│   │   │   ├── styles/
-│   │   │   │   ├── global.css
-│   │   │   │   ├── variables.css
-│   │   │   │   ├── components/
-│   │   │   │   │   ├── button.css
-│   │   │   │   │   ├── card.css
-│   │   │   │   │   └── modal.css
-│   │   │   │   └── pages/
-│   │   │   │       ├── home.css
-│   │   │   │       └── dashboard.css
-│   │   │   ├── assets/
-│   │   │   │   ├── images/
-│   │   │   │   │   ├── logo.png
-│   │   │   │   │   └── bus-icon.svg
-│   │   │   │   └── icons/
-│   │   │   ├── config/
-│   │   │   │   ├── env.js
-│   │   │   │   └── routes.js
-│   │   │   ├── App.jsx
-│   │   │   ├── App.css
-│   │   │   ├── index.js
-│   │   │   └── index.css
-│   │   ├── .env
-│   │   ├── .env.development
-│   │   ├── .env.production
-│   │   ├── .gitignore
-│   │   ├── package.json
-│   │   ├── package-lock.json
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── driver-app/
-│   │   ├── public/
-│   │   ├── src/
-│   │   │   ├── api/
-│   │   │   │   ├── axiosConfig.js
-│   │   │   │   ├── authApi.js
-│   │   │   │   ├── locationApi.js
-│   │   │   │   └── scheduleApi.js
-│   │   │   ├── components/
-│   │   │   │   ├── common/
-│   │   │   │   │   ├── Header.jsx
-│   │   │   │   │   ├── Footer.jsx
-│   │   │   │   │   └── Loading.jsx
-│   │   │   │   ├── auth/
-│   │   │   │   │   └── LoginForm.jsx
-│   │   │   │   ├── location/
-│   │   │   │   │   ├── LocationTracker.jsx
-│   │   │   │   │   ├── ManualLocationUpdate.jsx
-│   │   │   │   │   └── LocationStatus.jsx
-│   │   │   │   └── route/
-│   │   │   │       ├── CurrentRoute.jsx
-│   │   │   │       ├── NextStop.jsx
-│   │   │   │       └── RouteProgress.jsx
-│   │   │   ├── pages/
-│   │   │   │   ├── Login.jsx
-│   │   │   │   ├── Dashboard.jsx
-│   │   │   │   ├── ActiveRoute.jsx
-│   │   │   │   └── Profile.jsx
-│   │   │   ├── store/
-│   │   │   │   ├── store.js
-│   │   │   │   └── slices/
-│   │   │   │       ├── authSlice.js
-│   │   │   │       ├── locationSlice.js
-│   │   │   │       └── routeSlice.js
-│   │   │   ├── hooks/
-│   │   │   │   ├── useAuth.js
-│   │   │   │   ├── useGeolocation.js
-│   │   │   │   └── useWebSocket.js
-│   │   │   ├── services/
-│   │   │   │   ├── locationService.js
-│   │   │   │   └── websocketService.js
-│   │   │   ├── utils/
-│   │   │   │   └── gpsUtils.js
-│   │   │   ├── App.jsx
-│   │   │   └── index.js
-│   │   ├── package.json
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   └── admin-dashboard/
-│       ├── public/
-│       ├── src/
-│       │   ├── api/
-│       │   │   ├── axiosConfig.js
-│       │   │   ├── authApi.js
-│       │   │   ├── userApi.js
-│       │   │   ├── busApi.js
-│       │   │   ├── routeApi.js
-│       │   │   ├── scheduleApi.js
-│       │   │   ├── ticketApi.js
-│       │   │   └── analyticsApi.js
-│       │   ├── components/
-│       │   │   ├── common/
-│       │   │   │   ├── Sidebar.jsx
-│       │   │   │   ├── Topbar.jsx
-│       │   │   │   ├── Card.jsx
-│       │   │   │   ├── Table.jsx
-│       │   │   │   ├── Chart.jsx
-│       │   │   │   └── Modal.jsx
-│       │   │   ├── auth/
-│       │   │   │   └── AdminLogin.jsx
-│       │   │   ├── users/
-│       │   │   │   ├── UserList.jsx
-│       │   │   │   ├── UserForm.jsx
-│       │   │   │   ├── UserDetails.jsx
-│       │   │   │   └── UserFilters.jsx
-│       │   │   ├── buses/
-│       │   │   │   ├── BusList.jsx
-│       │   │   │   ├── BusForm.jsx
-│       │   │   │   ├── BusDetails.jsx
-│       │   │   │   └── BusStatus.jsx
-│       │   │   ├── routes/
-│       │   │   │   ├── RouteList.jsx
-│       │   │   │   ├── RouteForm.jsx
-│       │   │   │   ├── RouteDetails.jsx
-│       │   │   │   └── StopManager.jsx
-│       │   │   ├── schedules/
-│       │   │   │   ├── ScheduleList.jsx
-│       │   │   │   ├── ScheduleForm.jsx
-│       │   │   │   ├── ScheduleCalendar.jsx
-│       │   │   │   └── ScheduleConflicts.jsx
-│       │   │   ├── analytics/
-│       │   │   │   ├── Dashboard.jsx
-│       │   │   │   ├── RevenueChart.jsx
-│       │   │   │   ├── UsageStats.jsx
-│       │   │   │   ├── PopularRoutes.jsx
-│       │   │   │   └── PerformanceMetrics.jsx
-│       │   │   └── monitoring/
-│       │   │       ├── LiveBusMonitor.jsx
-│       │   │       ├── SystemHealth.jsx
-│       │   │       └── AlertsPanel.jsx
-│       │   ├── pages/
-│       │   │   ├── Login.jsx
-│       │   │   ├── Dashboard.jsx
-│       │   │   ├── Users.jsx
-│       │   │   ├── Buses.jsx
-│       │   │   ├── Routes.jsx
-│       │   │   ├── Schedules.jsx
-│       │   │   ├── Tickets.jsx
-│       │   │   ├── Analytics.jsx
-│       │   │   ├── Monitoring.jsx
-│       │   │   └── Settings.jsx
-│       │   ├── store/
-│       │   │   ├── store.js
-│       │   │   └── slices/
-│       │   │       ├── authSlice.js
-│       │   │       ├── userSlice.js
-│       │   │       ├── busSlice.js
-│       │   │       ├── routeSlice.js
-│       │   │       ├── scheduleSlice.js
-│       │   │       └── analyticsSlice.js
-│       │   ├── hooks/
-│       │   │   ├── useAuth.js
-│       │   │   ├── useTable.js
-│       │   │   └── useChart.js
-│       │   ├── utils/
-│       │   │   ├── validators.js
-│       │   │   ├── formatters.js
-│       │   │   └── chartConfig.js
-│       │   ├── styles/
-│       │   │   ├── admin.css
-│       │   │   └── dashboard.css
-│       │   ├── App.jsx
-│       │   └── index.js
-│       ├── package.json
-│       ├── Dockerfile
-│       └── README.md
+├── frontend/                             # React frontend application
+│   ├── src/
+│   │   ├── components/                   # Reusable UI components
+│   │   ├── pages/                        # Main page components
+│   │   ├── services/                     # API services (Axios / Fetch wrappers)
+│   │   ├── hooks/                        # Custom React hooks
+│   │   ├── store/                        # State management (Redux/Zustand)
+│   │   └── types/                        # TypeScript interfaces & types
+│   ├── e2e/                              # End-to-end Playwright tests
+│   └── public/                           # Static files (favicon, index.html)
 │
-├── shared/
-│   ├── common-models/
-│   │   ├── src/
-│   │   │   └── main/
-│   │   │       └── java/com/transport/common/
-│   │   │           ├── dto/
-│   │   │           │   ├── ApiResponse.java
-│   │   │           │   ├── ErrorResponse.java
-│   │   │           │   ├── PageResponse.java
-│   │   │           │   └── ValidationError.java
-│   │   │           ├── enums/
-│   │   │           │   ├── UserRole.java
-│   │   │           │   ├── TransactionStatus.java
-│   │   │           │   └── NotificationType.java
-│   │   │           └── constants/
-│   │   │               ├── KafkaTopics.java
-│   │   │               ├── ApiEndpoints.java
-│   │   │               └── ErrorCodes.java
-│   │   └── pom.xml
-│   │
-│   ├── common-utils/
-│   │   ├── src/
-│   │   │   └── main/
-│   │   │       └── java/com/transport/utils/
-│   │   │           ├── DateUtils.java
-│   │   │           ├── StringUtils.java
-│   │   │           ├── JsonUtils.java
-│   │   │           ├── ValidationUtils.java
-│   │   │           └── EncryptionUtils.java
-│   │   └── pom.xml
-│   │
-│   └── api-contracts/
-│       ├── src/
-│       │   └── main/
-│       │       └── java/com/transport/api/
-│       │           ├── user/
-│       │           │   ├── UserDto.java
-│       │           │   └── AuthDto.java
-│       │           ├── ticket/
-│       │           │   └── TicketDto.java
-│       │           ├── schedule/
-│       │           │   └── ScheduleDto.java
-│       │           └── subscription/
-│       │               └── SubscriptionDto.java
-│       └── pom.xml
+├── config-repo/                          # Centralized configuration files for Config Server
+│   ├── api-gateway.yml
+│   ├── user-service.yml
+│   └── ...                               # Other microservice configuration files
 │
-├── infrastructure/
-│   ├── docker/
-│   │   ├── docker-compose.yml
-│   │   ├── docker-compose.dev.yml
-│   │   ├── docker-compose.prod.yml
-│   │   ├── .env.example
-│   │   └── nginx/
-│   │       ├── nginx.conf
-│   │       └── Dockerfile
-│   │
-│   ├── kubernetes/
-│   │   ├── namespaces/
-│   │   │   ├── dev-namespace.yaml
-│   │   │   └── prod-namespace.yaml
-│   │   ├── configmaps/
-│   │   │   ├── api-gateway-config.yaml
-│   │   │   ├── kafka-config.yaml
-│   │   │   └── postgres-config.yaml
-│   │   ├── secrets/
-│   │   │   ├── db-secrets.yaml
-│   │   │   ├── jwt-secrets.yaml
-│   │   │   └── api-keys-secrets.yaml
-│   │   ├── deployments/
-│   │   │   ├── config-server-deployment.yaml
-│   │   │   ├── service-registry-deployment.yaml
-│   │   │   ├── api-gateway-deployment.yaml
-│   │   │   ├── user-service-deployment.yaml
-│   │   │   ├── ticket-service-deployment.yaml
-│   │   │   ├── schedule-service-deployment.yaml
-│   │   │   ├── geolocation-service-deployment.yaml
-│   │   │   ├── subscription-service-deployment.yaml
-│   │   │   ├── notification-service-deployment.yaml
-│   │   │   ├── postgres-deployment.yaml
-│   │   │   ├── mongodb-deployment.yaml
-│   │   │   ├── kafka-deployment.yaml
-│   │   │   ├── zookeeper-deployment.yaml
-│   │   │   └── redis-deployment.yaml
-│   │   ├── services/
-│   │   │   ├── config-server-service.yaml
-│   │   │   ├── service-registry-service.yaml
-│   │   │   ├── api-gateway-service.yaml
-│   │   │   ├── user-service-service.yaml
-│   │   │   ├── ticket-service-service.yaml
-│   │   │   ├── schedule-service-service.yaml
-│   │   │   ├── geolocation-service-service.yaml
-│   │   │   ├── subscription-service-service.yaml
-│   │   │   ├── notification-service-service.yaml
-│   │   │   ├── postgres-service.yaml
-│   │   │   ├── mongodb-service.yaml
-│   │   │   ├── kafka-service.yaml
-│   │   │   └── redis-service.yaml
-│   │   ├── ingress/
-│   │   │   ├── ingress.yaml
-│   │   │   └── ingress-tls.yaml
-│   │   ├── persistent-volumes/
-│   │   │   ├── postgres-pv.yaml
-│   │   │   ├── mongodb-pv.yaml
-│   │   │   └── kafka-pv.yaml
-│   │   ├── hpa/
-│   │   │   ├── user-service-hpa.yaml
-│   │   │   ├── ticket-service-hpa.yaml
-│   │   │   └── geolocation-service-hpa.yaml
-│   │   └── networkpolicies/
-│   │       ├── allow-gateway.yaml
-│   │       └── allow-internal.yaml
-│   │
-│   └── terraform/
-│       ├── main.tf
-│       ├── variables.tf
-│       ├── outputs.tf
-│       ├── providers.tf
-│       ├── modules/
-│       │   ├── vpc/
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   ├── eks/
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   ├── rds/
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   └── s3/
-│       │       ├── main.tf
-│       │       ├── variables.tf
-│       │       └── outputs.tf
-│       ├── environments/
-│       │   ├── dev/
-│       │   │   ├── terraform.tfvars
-│       │   │   └── backend.tf
-│       │   └── prod/
-│       │       ├── terraform.tfvars
-│       │       └── backend.tf
-│       └── README.md
+├── k8s/                                  # Kubernetes manifests for deployment
+│   ├── namespace.yaml                    # Kubernetes namespace definition
+│   ├── configmap.yaml                    # Shared configuration for services
+│   ├── secrets.yaml                      # Sensitive environment variables
+│   ├── service-registry.yaml             # Eureka deployment & service
+│   ├── backend-services.yaml             # Combined backend services (optional)
+│   ├── user-service.yaml                 # Deployment & service for User microservice
+│   ├── api-gateway.yaml                  # API Gateway deployment & service
+│   └── frontend.yaml                     # Frontend deployment & service
 │
-├── monitoring/
-│   ├── prometheus/
-│   │   ├── prometheus.yml
-│   │   ├── alert-rules.yml
-│   │   └── Dockerfile
-│   ├── grafana/
-│   │   ├── provisioning/
-│   │   │   ├── dashboards/
-│   │   │   │   ├── dashboard.yml
-│   │   │   │   ├── microservices-dashboard.json
-│   │   │   │   ├── kafka-dashboard.json
-│   │   │   │   └── system-metrics-dashboard.json
-│   │   │   └── datasources/
-│   │   │       └── datasource.yml
-│   │   ├── grafana.ini
-│   │   └── Dockerfile
-│   ├── elasticsearch/
-│   │   ├── elasticsearch.yml
-│   │   └── Dockerfile
-│   ├── logstash/
-│   │   ├── logstash.conf
-│   │   ├── pipelines.yml
-│   │   └── Dockerfile
-│   └── kibana/
-│       ├── kibana.yml
-│       └── Dockerfile
-│
-├── documentation/
-│   ├── architecture/
-│   │   ├── C4-model/
-│   │   │   ├── context-diagram.puml
-│   │   │   ├── container-diagram.puml
-│   │   │   ├── component-diagram.puml
-│   │   │   └── code-diagram.puml
-│   │   ├── UML/
-│   │   │   ├── class-diagrams/
-│   │   │   │   ├── user-service-classes.puml
-│   │   │   │   ├── ticket-service-classes.puml
-│   │   │   │   └── subscription-service-classes.puml
-│   │   │   ├── sequence-diagrams/
-│   │   │   │   ├── authentication-flow.puml
-│   │   │   │   ├── ticket-purchase-flow.puml
-│   │   │   │   ├── bus-tracking-flow.puml
-│   │   │   │   └── notification-flow.puml
-│   │   │   └── deployment-diagram.puml
-│   │   ├── BPMN/
-│   │   │   ├── ticket-purchase-process.bpmn
-│   │   │   ├── subscription-renewal-process.bpmn
-│   │   │   └── notification-process.bpmn
-│   │   ├── event-storming/
-│   │   │   ├── domain-events.md
-│   │   │   ├── aggregates.md
-│   │   │   └── bounded-contexts.md
-│   │   ├── architecture-decision-records/
-│   │   │   ├── ADR-001-microservices-architecture.md
-│   │   │   ├── ADR-002-kafka-messaging.md
-│   │   │   ├── ADR-003-database-per-service.md
-│   │   │   └── ADR-004-api-gateway-pattern.md
-│   │   └── system-overview.md
-│   │
-│   ├── api-docs/
-│   │   ├── swagger/
-│   │   │   ├── user-service-api.yaml
-│   │   │   ├── ticket-service-api.yaml
-│   │   │   ├── schedule-service-api.yaml
-│   │   │   ├── geolocation-service-api.yaml
-│   │   │   ├── subscription-service-api.yaml
-│   │   │   └── notification-service-api.yaml
-│   │   ├── postman/
-│   │   │   ├── Transport-System.postman_collection.json
-│   │   │   └── environments/
-│   │   │       ├── dev.postman_environment.json
-│   │   │       └── prod.postman_environment.json
-│   │   └── README.md
-│   │
-│   ├── deployment-guide/
-│   │   ├── local-setup.md
-│   │   ├── docker-deployment.md
-│   │   ├── kubernetes-deployment.md
-│   │   ├── cloud-deployment.md
-│   │   └── troubleshooting.md
-│   │
-│   ├── developer-guide/
-│   │   ├── getting-started.md
-│   │   ├── coding-standards.md
-│   │   ├── git-workflow.md
-│   │   ├── testing-guidelines.md
-│   │   └── contributing.md
-│   │
-│   └── user-manuals/
-│       ├── passenger-manual.md
-│       ├── driver-manual.md
-│       └── admin-manual.md
-│
-├── scripts/
-│   ├── setup/
-│   │   ├── setup-dev-environment.sh
-│   │   ├── install-dependencies.sh
-│   │   └── setup-databases.sh
-│   ├── deployment/
-│   │   ├── deploy-all-services.sh
-│   │   ├── deploy-single-service.sh
-│   │   ├── rollback.sh
-│   │   └── scale-services.sh
-│   ├── database/
-│   │   ├── seed-data.sh
-│   │   ├── backup-databases.sh
-│   │   ├── restore-databases.sh
-│   │   └── migrations.sh
-│   ├── testing/
-│   │   ├── run-unit-tests.sh
-│   │   ├── run-integration-tests.sh
-│   │   ├── run-e2e-tests.sh
-│   │   └── performance-tests.sh
-│   ├── monitoring/
-│   │   ├── health-check.sh
-│   │   ├── generate-metrics-report.sh
-│   │   └── alert-test.sh
-│   └── utilities/
-│       ├── generate-jwt-secret.sh
-│       ├── cleanup-docker.sh
-│       └── port-forward-services.sh
-│
-├── tests/
-│   ├── e2e/
-│   │   ├── cypress/
-│   │   │   ├── e2e/
-│   │   │   │   ├── auth.cy.js
-│   │   │   │   ├── ticket-purchase.cy.js
-│   │   │   │   ├── bus-tracking.cy.js
-│   │   │   │   └── subscription.cy.js
-│   │   │   ├── fixtures/
-│   │   │   │   ├── users.json
-│   │   │   │   └── tickets.json
-│   │   │   ├── support/
-│   │   │   │   ├── commands.js
-│   │   │   │   └── e2e.js
-│   │   │   └── cypress.config.js
-│   │   └── package.json
-│   │
-│   ├── integration/
-│   │   └── src/
-│   │       └── test/
-│   │           └── java/com/transport/integration/
-│   │               ├── UserServiceIntegrationTest.java
-│   │               ├── TicketServiceIntegrationTest.java
-│   │               ├── ScheduleServiceIntegrationTest.java
-│   │               └── KafkaIntegrationTest.java
-│   │
-│   └── performance/
-│       ├── jmeter/
-│       │   ├── ticket-purchase-load-test.jmx
-│       │   ├── schedule-query-load-test.jmx
-│       │   └── bus-tracking-load-test.jmx
-│       └── k6/
-│           ├── load-test.js
-│           └── stress-test.js
+├── terraform/                            # Infrastructure as Code (GCP)
+│   ├── provider.tf                       # GCP provider setup
+│   ├── gke.tf                            # GKE cluster creation
+│   ├── database.tf                       # Cloud SQL PostgreSQL instances
+│   ├── redis.tf                          # Memorystore Redis instance
+│   ├── variables.tf                      # Shared variables
+│   └── outputs.tf                        # Exported Terraform outputs
 │
 ├── .github/
-│   └── workflows/
-│       ├── ci-backend.yml
-│       ├── ci-frontend.yml
-│       ├── cd-dev.yml
-│       ├── cd-prod.yml
-│       ├── security-scan.yml
-│       └── automated-tests.yml
+│   └── workflows/                        # CI/CD pipelines (GitHub Actions)
+│       ├── ci-cd.yml                     # Full CI/CD pipeline (build + deploy)
+│       ├── backend-ci.yml                # Backend build & test pipeline
+│       ├── frontend-ci.yml               # Frontend build & test pipeline
+│       └── docker-build.yml              # Docker image build & push
 │
-├── .gitignore
-├── .dockerignore
-├── README.md
-├── CONTRIBUTING.md
-├── LICENSE
-└── pom.xml (parent POM)
+├── docker-compose.yml                    # Local development setup for services
+│
+└── README.md                             # Project documentation and setup instructions
+
 ```
+
+## Prerequisites
+
+Before setting up the project, ensure you have the following installed:
+
+- **Java Development Kit (JDK) 17** or higher
+- **Node.js 20** or higher
+- **Maven 3.8+** for building backend services
+- **Docker 24+** and **Docker Compose 2.20+**
+- **Kubernetes CLI (kubectl) 1.27+** (for Kubernetes deployment)
+- **Git** for version control
+- **Terraform 1.5+** (for infrastructure provisioning)
+- **Google Cloud SDK** (for GCP deployment)
+
+### Optional Tools
+- **IntelliJ IDEA** or **Eclipse** for backend development
+- **Visual Studio Code** for frontend development
+- **Postman** for API testing
+- **pgAdmin** for database management
+
+## Getting Started
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/yousfiwiame/Urban-Transport-System.git
+cd Urban-Transport-System
+```
+
+### Required Customizations
+
+Before deploying or running the application, you must customize the following files with your own credentials and settings:
+
+#### 1. Terraform Configuration
+
+**File**: `terraform/terraform.tfvars`
+
+Replace the following values:
+- `project_id`: Your GCP project ID
+- `region`: Your preferred GCP region
+- `db_password`: A strong database password
+- `mongodb_connection_string`: Your MongoDB connection string
+- `image_prefix`: Your GitHub username or organization
+
+```hcl
+project_id                 = "your-gcp-project-id"
+region                     = "us-central1"
+db_password                = "your-secure-db-password"
+mongodb_connection_string  = "your-mongodb-connection-string"
+image_prefix               = "your-github-username/urban-transport"
+```
+
+#### 2. Kubernetes Secrets
+
+**File**: `k8s/secrets.yaml`
+
+Update the **base64-encoded** secrets with your own values:
+```bash
+# Generate base64 encoded values
+echo -n "your-db-password" | base64
+echo -n "your-mongodb-connection-string" | base64
+echo -n "your-jwt-secret" | base64
+```
+
+Replace in `k8s/secrets.yaml`:
+- `DB_PASSWORD`: Base64-encoded database password
+- `MONGODB_CONNECTION_STRING`: Base64-encoded MongoDB connection string
+- `JWT_SECRET`: Base64-encoded JWT signing secret (use a long random string)
+
+**Important**: For production, never commit secrets to Git. Use the command-line approach shown in the Kubernetes deployment section instead.
+
+#### 3. GitHub Actions CI/CD
+
+**File**: `.github/workflows/ci-cd.yml`
+
+Update the following values:
+- Lines 204, 244: `urban-transport-cluster` - Replace with your GKE cluster name if different
+- Lines 206, 246: `urban-transport-system-xxxxxx` - Replace with your GCP project ID
+- Lines 205, 245: `us-central1` - Replace with your GCP region if different
+
+**GitHub Secrets Required** (Settings → Secrets → Actions):
+- `GCP_SA_KEY`: Your Google Cloud service account key JSON
+- `DB_PASSWORD`: Database password
+- `JWT_SECRET`: JWT signing secret (minimum 32 characters)
+- `MONGODB_CONNECTION_STRING`: MongoDB connection string
+- `GITHUB_TOKEN`: Automatically provided by GitHub
+
+To create a GCP service account key:
+```bash
+gcloud iam service-accounts create github-actions \
+  --display-name="GitHub Actions"
+
+gcloud projects add-iam-policy-binding your-project-id \
+  --member="serviceAccount:github-actions@your-project-id.iam.gserviceaccount.com" \
+  --role="roles/container.developer"
+
+gcloud iam service-accounts keys create key.json \
+  --iam-account=github-actions@your-project-id.iam.gserviceaccount.com
+```
+
+#### 4. Docker Compose (Optional)
+
+**File**: `docker-compose.yml`
+
+For production use, update default passwords:
+- Lines 12, 32, 54, 75, 96: `POSTGRES_PASSWORD`
+- Consider using Docker secrets or environment variables for sensitive data
+
+#### 5. Frontend Environment Variables
+
+**File**: `frontend/.env` (create this file)
+
+```env
+VITE_API_GATEWAY_URL=http://localhost:8080
+VITE_WS_URL=ws://localhost:8080/ws
+```
+
+For production deployment:
+```env
+VITE_API_GATEWAY_URL=https://your-api-gateway-domain.com
+VITE_WS_URL=wss://your-api-gateway-domain.com/ws
+```
+
+### Configuration
+
+#### Backend Configuration
+
+The backend services use Spring Cloud Config for centralized configuration. Configuration files are located in the `config-repo/` directory.
+
+For local development, update the following files:
+
+1. **Database Configuration**: Update database URLs and credentials in each service's configuration file:
+   ```yaml
+   spring:
+     datasource:
+       url: jdbc:postgresql://localhost:5432/user_db
+       username: postgres
+       password: postgres
+   ```
+
+2. **Kafka Configuration**: Ensure Kafka connection settings match your local setup:
+   ```yaml
+   spring:
+     kafka:
+       bootstrap-servers: localhost:9092
+   ```
+
+3. **Redis Configuration**: Update Redis connection details:
+   ```yaml
+   spring:
+     redis:
+       host: localhost
+       port: 6379
+   ```
+
+#### Frontend Configuration
+
+Create a `.env` file in the `frontend/` directory:
+
+```env
+VITE_API_GATEWAY_URL=http://localhost:8080
+VITE_WS_URL=ws://localhost:8080/ws
+```
+
+## Local Development
+
+### Backend Services
+
+#### Build All Services
+
+```bash
+cd backend
+mvn clean install
+```
+
+#### Run Individual Services
+
+Each service can be started independently:
+
+```bash
+# Start Service Registry (Eureka)
+cd backend/service-registry
+mvn spring-boot:run
+
+# Start Config Server
+cd backend/config-server
+mvn spring-boot:run
+
+# Start User Service
+cd backend/user-service
+mvn spring-boot:run
+
+# Start API Gateway
+cd backend/api-gateway
+mvn spring-boot:run
+```
+
+**Note**: Start services in the following order to ensure proper dependency resolution:
+1. Service Registry (port 8761)
+2. Config Server (port 8888)
+3. Business services (8081-8086)
+4. API Gateway (port 8080)
+
+#### Run Tests
+
+```bash
+# Run all tests
+cd backend
+mvn test
+
+# Run tests for specific service
+cd backend/user-service
+mvn test
+
+# Run integration tests
+cd backend
+mvn verify
+```
+
+### Frontend Application
+
+#### Install Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+#### Start Development Server
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:3000`
+
+#### Build for Production
+
+```bash
+npm run build
+```
+
+#### Run Linter
+
+```bash
+npm run lint
+```
+
+#### Run E2E Tests
+
+```bash
+# Install Playwright browsers (first time only)
+npx playwright install
+
+# Run E2E tests
+npx playwright test
+
+# Run tests in UI mode
+npx playwright test --ui
+```
+
+<h3 id="docker-deployment" style="display: flex; align-items: center;">
+  <img src="https://skillicons.dev/icons?i=docker" alt="Docker" width="32" height="32" style="margin-right: 10px;">
+  Docker Deployment
+</h3>
+
+The entire system can be deployed using Docker Compose for local testing or development environments.
+
+### Start All Services
+
+```bash
+docker-compose up -d
+```
+
+This command will:
+- Build Docker images for all services
+- Start all databases (PostgreSQL, MongoDB)
+- Start infrastructure services (Redis, Kafka, Zookeeper, Zipkin)
+- Start all microservices
+- Start the frontend application
+
+### View Logs
+
+```bash
+# View all logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f user-service
+
+# View last 100 lines
+docker-compose logs --tail=100 -f
+```
+
+### Stop All Services
+
+```bash
+docker-compose down
+```
+
+### Stop and Remove Volumes
+
+```bash
+docker-compose down -v
+```
+
+### Build and Push Docker Images
+
+```bash
+# Build all images
+docker-compose build
+
+# Build specific service
+docker-compose build user-service
+
+# Push to container registry (requires authentication)
+docker-compose push
+```
+
+### Access Services
+
+Once all services are running:
+
+- **Frontend**: http://localhost:3000
+- **API Gateway**: http://localhost:8080
+- **Service Registry**: http://localhost:8761
+- **Config Server**: http://localhost:8888
+- **Zipkin Dashboard**: http://localhost:9411
+- **User Service**: http://localhost:8081
+- **Ticket Service**: http://localhost:8082
+- **Schedule Service**: http://localhost:8083
+- **Geolocation Service**: http://localhost:8084
+- **Subscription Service**: http://localhost:8085
+- **Notification Service**: http://localhost:8086
+
+<h3 id="kubernetes-deployment" style="display: flex; align-items: center;">
+  <img src="https://skillicons.dev/icons?i=kubernetes" alt="Kubernetes" width="32" height="32" style="margin-right: 10px;">
+  Kubernetes Deployment
+</h3>
+
+### Prerequisites
+
+1. A running Kubernetes cluster (local or cloud-based)
+2. `kubectl` configured to interact with your cluster
+3. Docker images pushed to a container registry
+
+### Deploy to Local Kubernetes (Minikube/Kind)
+
+```bash
+# Start Minikube (if using Minikube)
+minikube start
+
+# Apply Kubernetes manifests
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/service-registry.yaml
+kubectl apply -f k8s/backend-services.yaml
+kubectl apply -f k8s/user-service.yaml
+kubectl apply -f k8s/api-gateway.yaml
+kubectl apply -f k8s/frontend.yaml
+
+# Check deployment status
+kubectl get pods -n urban-transport
+kubectl get svc -n urban-transport
+```
+
+### Deploy to Google Kubernetes Engine (GKE)
+
+<h4 id="kubernetes-deployment" style="display: flex; align-items: center;">
+  <img src="https://skillicons.dev/icons?i=terraform" alt="Terraform" width="32" height="32" style="margin-right: 10px;">
+  1. Provision Infrastructure with Terraform
+</h4>
+
+```bash
+cd terraform
+
+# Initialize Terraform
+terraform init
+
+# Review planned changes
+terraform plan
+
+# Apply infrastructure changes
+terraform apply
+```
+
+#### 2. Configure kubectl for GKE
+
+```bash
+gcloud container clusters get-credentials urban-transport-cluster \
+  --region us-central1 \
+  --project urban-transport-system-xxxxxx
+```
+
+#### 3. Create Kubernetes Secrets
+
+```bash
+kubectl create secret generic app-secrets \
+  --from-literal=DB_PASSWORD=your_db_password \
+  --from-literal=JWT_SECRET=your_jwt_secret \
+  --from-literal=MONGODB_CONNECTION_STRING=your_mongo_connection_string \
+  --namespace=urban-transport
+
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=your_github_username \
+  --docker-password=your_github_token \
+  --namespace=urban-transport
+```
+
+#### 4. Deploy Application
+
+```bash
+cd k8s
+
+kubectl apply -f namespace.yaml
+kubectl apply -f configmap.yaml
+kubectl apply -f service-registry.yaml
+kubectl apply -f backend-services.yaml
+kubectl apply -f user-service.yaml
+kubectl apply -f api-gateway.yaml
+kubectl apply -f frontend.yaml
+```
+
+#### 5. Monitor Deployment
+
+```bash
+# Watch pod status
+kubectl get pods -n urban-transport -w
+
+# Check service endpoints
+kubectl get svc -n urban-transport
+
+# View logs for specific pod
+kubectl logs -f <pod-name> -n urban-transport
+
+# Describe pod for troubleshooting
+kubectl describe pod <pod-name> -n urban-transport
+```
+
+#### 6. Access Application
+
+```bash
+# Get LoadBalancer IP for frontend
+kubectl get svc frontend -n urban-transport
+
+# Get LoadBalancer IP for API Gateway
+kubectl get svc api-gateway -n urban-transport
+```
+
+### Scale Deployments
+
+```bash
+# Scale user service to 3 replicas
+kubectl scale deployment user-service --replicas=3 -n urban-transport
+
+# Auto-scale based on CPU
+kubectl autoscale deployment user-service \
+  --cpu-percent=70 \
+  --min=2 \
+  --max=10 \
+  -n urban-transport
+```
+
+### Update Deployment
+
+```bash
+# Update image
+kubectl set image deployment/user-service \
+  user-service=ghcr.io/your-username/user-service:v2.0.0 \
+  -n urban-transport
+
+# Check rollout status
+kubectl rollout status deployment/user-service -n urban-transport
+
+# Rollback if needed
+kubectl rollout undo deployment/user-service -n urban-transport
+```
+
+<h2 id="cicd-pipeline" style="display: flex; align-items: center;">
+  <img src="https://skillicons.dev/icons?i=githubactions" alt="GitHub Actions" width="32" height="32" style="margin-right: 10px;">
+  CI/CD Pipeline
+</h2>
+
+The project uses GitHub Actions for continuous integration and deployment.
+
+### Pipeline Stages
+
+1. **Backend Testing**: Runs Maven tests for all services
+2. **Backend Build**: Compiles and packages JAR files
+3. **Frontend Testing**: Runs linting and builds
+4. **E2E Testing**: Executes Playwright tests
+5. **Docker Build**: Builds and pushes Docker images to GHCR
+6. **Deploy to Staging**: Automatic deployment on `develop` branch
+7. **Deploy to Production**: Automatic deployment on `main` branch
+
+### Trigger Pipeline
+
+```bash
+# Push to main branch triggers production deployment
+git push origin main
+
+# Push to develop branch triggers staging deployment
+git push origin develop
+
+# Manual deployment
+gh workflow run ci-cd.yml -f environment=production
+```
+
+### View Pipeline Status
+
+- Navigate to the **Actions** tab in your GitHub repository
+- Monitor build logs and deployment status
+- View test reports and artifacts
+
+### Required GitHub Secrets
+
+Configure the following secrets in your repository settings:
+
+- `GCP_SA_KEY`: Google Cloud service account key (JSON)
+- `DB_PASSWORD`: Database password for production
+- `JWT_SECRET`: JWT signing secret
+- `MONGODB_CONNECTION_STRING`: MongoDB connection string
+- `GITHUB_TOKEN`: Automatically provided by GitHub Actions
+
+## Testing
+
+<h3 id="testing" style="display: flex; align-items: center;">
+  <img src="https://skillicons.dev/icons?i=maven" alt="Maven" width="32" height="32" style="margin-right: 10px;">
+  Backend Testing
+</h3>
+
+```bash
+# Run unit tests
+cd backend
+mvn test
+
+# Run integration tests
+mvn verify
+
+# Run tests with coverage
+mvn clean test jacoco:report
+
+# View coverage report
+open backend/user-service/target/site/jacoco/index.html
+```
+
+<h3 id="testing" style="display: flex; align-items: center;">
+  <img src="https://skillicons.dev/icons?i=playwright" alt="Playwright" width="32" height="32" style="margin-right: 10px;">
+  Frontend Testing
+</h3>
+
+```bash
+cd frontend
+
+# Run linter
+npm run lint
+
+# Run E2E tests
+npx playwright test
+
+# Run E2E tests with UI
+npx playwright test --ui
+
+# Run specific test file
+npx playwright test tests/login.spec.ts
+
+# Generate test report
+npx playwright show-report
+```
+
+### API Testing
+
+Use the provided Postman collection or test endpoints directly:
+
+```bash
+# Health check
+curl http://localhost:8080/actuator/health
+
+# User registration
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com","password":"password123"}'
+
+# User login
+curl -X POST http://localhost:8080/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"password123"}'
+```
+
+## API Documentation
+
+### Service Endpoints
+
+#### User Service (8081)
+- `POST /api/users/register` - User registration
+- `POST /api/users/login` - User authentication
+- `GET /api/users/profile` - Get user profile
+- `PUT /api/users/profile` - Update user profile
+
+#### Ticket Service (8082)
+- `POST /api/tickets/purchase` - Purchase ticket
+- `GET /api/tickets` - Get user tickets
+- `POST /api/tickets/{id}/validate` - Validate ticket
+
+#### Schedule Service (8083)
+- `GET /api/schedules` - Get all schedules
+- `GET /api/schedules/{id}` - Get schedule by ID
+- `GET /api/routes` - Get all routes
+
+#### Geolocation Service (8084)
+- `GET /api/geolocation/vehicles` - Get all vehicle positions
+- `GET /api/geolocation/vehicles/{id}` - Get specific vehicle location
+- `WS /ws/locations` - WebSocket for real-time updates
+
+#### Subscription Service (8085)
+- `POST /api/subscriptions` - Create subscription
+- `GET /api/subscriptions` - Get user subscriptions
+- `PUT /api/subscriptions/{id}/cancel` - Cancel subscription
+
+#### Notification Service (8086)
+- `GET /api/notifications` - Get user notifications
+- `PUT /api/notifications/{id}/read` - Mark notification as read
+
+### API Gateway Routes
+
+All client requests should go through the API Gateway at `http://localhost:8080`
+
+The gateway automatically routes requests to appropriate services based on path prefixes.
+
+## Quick Reference
+
+### Essential Commands Summary
+
+#### Local Development
+```bash
+# Backend
+cd backend && mvn clean install          # Build all services
+cd backend/service-registry && mvn spring-boot:run   # Start Eureka
+cd backend/user-service && mvn spring-boot:run       # Start User Service
+cd backend && mvn test                   # Run all tests
+
+# Frontend
+cd frontend && npm install               # Install dependencies
+npm run dev                              # Start dev server
+npm run build                            # Build for production
+npm run lint                             # Run linter
+npx playwright test                      # Run E2E tests
+```
+
+#### Docker
+```bash
+docker-compose up -d                     # Start all services
+docker-compose down                      # Stop all services
+docker-compose down -v                   # Stop and remove volumes
+docker-compose logs -f <service>         # View logs
+docker-compose build                     # Build images
+docker-compose ps                        # List running services
+```
+
+#### Kubernetes
+```bash
+# Deploy
+kubectl apply -f k8s/                    # Apply all manifests
+kubectl get pods -n urban-transport      # Check pod status
+kubectl get svc -n urban-transport       # Check services
+kubectl logs -f <pod-name> -n urban-transport   # View logs
+
+# Scale
+kubectl scale deployment user-service --replicas=3 -n urban-transport
+
+# Update
+kubectl set image deployment/user-service user-service=ghcr.io/user/image:v2 -n urban-transport
+kubectl rollout status deployment/user-service -n urban-transport
+kubectl rollout undo deployment/user-service -n urban-transport
+```
+
+#### Terraform
+```bash
+cd terraform
+terraform init                           # Initialize Terraform
+terraform plan                           # Preview changes
+terraform apply                          # Apply infrastructure
+terraform destroy                        # Destroy infrastructure
+terraform output                         # View outputs
+```
+
+#### GKE Deployment
+```bash
+# Authenticate
+gcloud auth login
+gcloud config set project your-project-id
+
+# Configure kubectl
+gcloud container clusters get-credentials urban-transport-cluster \
+  --region us-central1 --project your-project-id
+
+# Create secrets
+kubectl create secret generic app-secrets \
+  --from-literal=DB_PASSWORD=your-password \
+  --from-literal=JWT_SECRET=your-secret \
+  --from-literal=MONGODB_CONNECTION_STRING=your-connection-string \
+  --namespace=urban-transport
+
+# Deploy
+kubectl apply -f k8s/ -n urban-transport
+```
+
+#### Testing
+```bash
+# Backend
+mvn test                                 # Unit tests
+mvn verify                               # Integration tests
+mvn clean test jacoco:report             # With coverage
+
+# Frontend
+npm run lint                             # Linting
+npx playwright test                      # E2E tests
+npx playwright test --ui                 # E2E with UI
+npx playwright show-report               # View report
+
+# API
+curl http://localhost:8080/actuator/health   # Health check
+```
+
+#### Troubleshooting
+```bash
+# Docker
+docker-compose logs -f --tail=100        # View recent logs
+docker system prune -a                   # Clean up Docker
+
+# Kubernetes
+kubectl describe pod <pod-name> -n urban-transport    # Pod details
+kubectl get events -n urban-transport --sort-by='.lastTimestamp'
+kubectl exec -it <pod-name> -n urban-transport -- /bin/sh   # Access pod
+
+# Services
+kubectl port-forward svc/api-gateway 8080:8080 -n urban-transport
+```
+
+## Contributing
+
+Contributions are welcome. Please follow these guidelines:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add some feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+---
+
+**Built with ❤️ by City Bus Team**  
+**Contact**: [wiame.yousfi22@gmail.com](mailto:wiame.yousfi22@gmail.com)  
+**Repository**: [https://github.com/yousfiwiame/Urban-Transport-System](https://github.com/yousfiwiame/Urban-Transport-System)
